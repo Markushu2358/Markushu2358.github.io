@@ -259,23 +259,26 @@ function getParticleStartPosition() {
     return { x: startX, y: startY };
 }
 
+// ===================== 粒子特效（修复：终点=能量条当前进度末端） =====================
 /**
- * 获取粒子终点：对应能量条的末端位置（绝对坐标）
- * - 不到1格：第一个能量条末端
- * - 1-2格：第二个能量条末端
- * - 2格以上：第三个能量条末端
+ * 获取粒子终点：对应能量条的当前进度末端位置（绝对坐标）
+ * - 不到1格：第一个能量条当前进度的末端
+ * - 1-2格：第二个能量条当前进度的末端
+ * - 2格以上：第三个能量条当前进度的末端
  */
 function getParticleTargetPosition() {
+    // 计算当前能量分布在第几个格子
     const barIndex = Math.min(Math.floor(totalGreenEnergy / currentConfig.barCapacity), greenFills.length - 1);
     const bar = greenFills[barIndex];
     const barRect = bar.parentElement.getBoundingClientRect();
     
-    // 能量条末端X坐标 = 能量条右侧
-    const targetX = barRect.right;
+    // 计算当前格子的填充百分比（0-100）
+    const fillPercent = parseFloat(bar.style.width) || 0;
+    // 粒子终点X = 能量条左侧 + 填充百分比 * 能量条宽度
+    const targetX = barRect.left + (fillPercent / 100) * barRect.width;
     const targetY = barRect.top + barRect.height / 2; // 能量条垂直居中
     return { x: targetX, y: targetY };
 }
-
 function createParticle() {
     if (!isInTargetZone() || gameOver) return;
     
@@ -782,32 +785,62 @@ function useSkill3() {
     status.textContent = `${status.textContent.split('|')[0]} | 技能3！造成${currentConfig.skill3Damage}高额伤害`;
 }
 
-// ===================== 事件绑定（统一管理，避免重复） =====================
+// ===================== 事件绑定（优化移动端点击） =====================
 function bindEvents() {
-    // 鼠标/触摸拖动事件
+    // 鼠标/触摸拖动事件（收线按钮）
     reelButton.addEventListener('mousedown', handleDragStart);
     document.addEventListener('mousemove', handleDragMove);
     document.addEventListener('mouseup', handleDragEnd);
     document.addEventListener('mouseleave', handleDragEnd);
+    // 收线按钮的touch事件设置passive: false（需要阻止默认行为）
     reelButton.addEventListener('touchstart', handleDragStart, { passive: false });
     document.addEventListener('touchmove', handleDragMove, { passive: false });
     document.addEventListener('touchend', handleDragEnd);
     document.addEventListener('touchcancel', handleDragEnd);
     
-    // 重置按钮
+    // 其他按钮的点击事件（优化移动端响应）
     resetButton.addEventListener('click', resetGame);
     if (gameOverResetBtn) gameOverResetBtn.addEventListener('click', resetGame);
     
-    // 技能按钮
     skill1Button.addEventListener('click', useSkill1);
     skill2Button.addEventListener('click', useSkill2);
     skill3Button.addEventListener('click', useSkill3);
     
-    // 鱼模式切换
     normalFishBtn.addEventListener('click', () => switchFishMode(false));
     bossFishBtn.addEventListener('click', () => switchFishMode(true));
+    
+    // 额外：给移动端按钮添加touchstart事件（增强点击响应）
+    skill1Button.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        useSkill1();
+    }, { passive: false });
+    skill2Button.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        useSkill2();
+    }, { passive: false });
+    skill3Button.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        useSkill3();
+    }, { passive: false });
+    resetButton.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        resetGame();
+    }, { passive: false });
+    normalFishBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        switchFishMode(false);
+    }, { passive: false });
+    bossFishBtn.addEventListener('touchstart', (e) => {
+        e.preventDefault();
+        switchFishMode(true);
+    }, { passive: false });
+    if (gameOverResetBtn) {
+        gameOverResetBtn.addEventListener('touchstart', (e) => {
+            e.preventDefault();
+            resetGame();
+        }, { passive: false });
+    }
 }
-
 // ===================== 初始化游戏 =====================
 function initGame() {
     // 初始化鱼方向
