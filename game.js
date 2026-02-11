@@ -241,13 +241,13 @@ function pullToCenter() {
     }
 }
 
-// ===================== 粒子特效（移动端性能优化） =====================
+// ===================== 粒子特效（修复容器位置变更后的坐标计算） =====================
 function getEnergyBarPosition(barIndex) {
     const bar = greenFills[barIndex];
     const rect = bar.getBoundingClientRect();
-    const particleRect = particleContainer.getBoundingClientRect();
-    const targetX = rect.left + rect.width/2 - particleRect.left;
-    const targetY = rect.top + rect.height/2 - particleRect.top;
+    // 粒子容器改为fixed全屏，直接使用绝对坐标
+    const targetX = rect.left + rect.width/2;
+    const targetY = rect.top + rect.height/2;
     return { x: targetX, y: targetY };
 }
 
@@ -255,17 +255,21 @@ function createParticle() {
     if (!isInTargetZone() || gameOver) return;
     const targetBarIndex = Math.floor(Math.random() * greenFills.length);
     const targetPos = getEnergyBarPosition(targetBarIndex);
+    
+    // 获取拉力条的绝对位置（用于计算粒子起始位置）
+    const topBarRect = document.querySelector('.top-bar').getBoundingClientRect();
+    const targetStart = isBossMode ? targetZoneLeft : BASE_TARGET_START;
+    const targetEnd = isBossMode ? (targetZoneLeft + targetZoneWidth) : BASE_TARGET_END;
+    
+    // 计算粒子在拉力条内的随机起始位置（绝对坐标）
+    const randomXPercent = Math.random() * (targetEnd - targetStart) + targetStart;
+    const startX = topBarRect.left + (randomXPercent / 100) * topBarRect.width;
+    const startY = topBarRect.top + Math.random() * topBarRect.height;
+    
     const particle = document.createElement('div');
     particle.classList.add('particle');
     
-    const targetStart = isBossMode ? targetZoneLeft : BASE_TARGET_START;
-    const targetEnd = isBossMode ? (targetZoneLeft + targetZoneWidth) : BASE_TARGET_END;
-    const randomX = Math.random() * (targetEnd - targetStart) + targetStart;
-    
-    const particleContainerRect = particleContainer.getBoundingClientRect();
-    const startX = (randomX / 100) * particleContainerRect.width;
-    const startY = Math.random() * particleContainerRect.height;
-    
+    // 设置粒子起始位置（绝对坐标）
     particle.style.left = `${startX}px`;
     particle.style.top = `${startY}px`;
     
@@ -277,6 +281,7 @@ function createParticle() {
     const duration = Math.random() * 1.2 + 0.4;
     particle.style.animationDuration = `${duration}s`;
     
+    // 计算粒子目标偏移量
     particle.style.setProperty('--target-x', targetPos.x - startX);
     particle.style.setProperty('--target-y', targetPos.y - startY);
     particle.style.animationName = 'particle-to-energy';
@@ -688,7 +693,7 @@ function resetGame() {
         ? `[BOSS模式] 按住并拖动收线按钮 | 黄色判定区：动态变化 | 总能量：0/${currentConfig.maxEnergy}`
         : `按住并拖动收线按钮 | 黄色判定区：60%（含）-85%（不含） | 总能量：0/${currentConfig.maxEnergy}`;
     status.textContent = defaultStatus;
-    status.style.color = '#666';
+    status.style.color = '#ffffff'; // 适配水域背景的白色
     status.classList.remove('correct', 'wrong');
     
     // 隐藏游戏结束弹窗
