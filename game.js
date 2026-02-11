@@ -11,6 +11,12 @@ const greenFills = [
     document.getElementById('greenFill2'),
     document.getElementById('greenFill3')
 ];
+// 新增：获取能量条文字元素
+const greenBarTexts = [
+    document.getElementById('greenBarText1'),
+    document.getElementById('greenBarText2'),
+    document.getElementById('greenBarText3')
+];
 const greenEffects = [
     document.getElementById('greenEffect1'),
     document.getElementById('greenEffect2'),
@@ -241,39 +247,50 @@ function pullToCenter() {
     }
 }
 
-// ===================== 粒子特效（修复容器位置变更后的坐标计算） =====================
-function getEnergyBarPosition(barIndex) {
+// ===================== 粒子特效（修复：起点=橙色条末端，终点=能量条末端） =====================
+/**
+ * 获取粒子起点：橙色拉力条当前进度的末端位置（绝对坐标）
+ */
+function getParticleStartPosition() {
+    const topBarRect = document.querySelector('.top-bar').getBoundingClientRect();
+    // 橙色条末端X坐标 = 拉力条左侧 + 橙色条进度百分比 * 拉力条宽度
+    const startX = topBarRect.left + (orangeProgress / 100) * topBarRect.width;
+    const startY = topBarRect.top + topBarRect.height / 2; // 拉力条垂直居中
+    return { x: startX, y: startY };
+}
+
+/**
+ * 获取粒子终点：对应能量条的末端位置（绝对坐标）
+ * - 不到1格：第一个能量条末端
+ * - 1-2格：第二个能量条末端
+ * - 2格以上：第三个能量条末端
+ */
+function getParticleTargetPosition() {
+    const barIndex = Math.min(Math.floor(totalGreenEnergy / currentConfig.barCapacity), greenFills.length - 1);
     const bar = greenFills[barIndex];
-    const rect = bar.getBoundingClientRect();
-    // 粒子容器改为fixed全屏，直接使用绝对坐标
-    const targetX = rect.left + rect.width/2;
-    const targetY = rect.top + rect.height/2;
+    const barRect = bar.parentElement.getBoundingClientRect();
+    
+    // 能量条末端X坐标 = 能量条右侧
+    const targetX = barRect.right;
+    const targetY = barRect.top + barRect.height / 2; // 能量条垂直居中
     return { x: targetX, y: targetY };
 }
 
 function createParticle() {
     if (!isInTargetZone() || gameOver) return;
-    const targetBarIndex = Math.floor(Math.random() * greenFills.length);
-    const targetPos = getEnergyBarPosition(targetBarIndex);
     
-    // 获取拉力条的绝对位置（用于计算粒子起始位置）
-    const topBarRect = document.querySelector('.top-bar').getBoundingClientRect();
-    const targetStart = isBossMode ? targetZoneLeft : BASE_TARGET_START;
-    const targetEnd = isBossMode ? (targetZoneLeft + targetZoneWidth) : BASE_TARGET_END;
-    
-    // 计算粒子在拉力条内的随机起始位置（绝对坐标）
-    const randomXPercent = Math.random() * (targetEnd - targetStart) + targetStart;
-    const startX = topBarRect.left + (randomXPercent / 100) * topBarRect.width;
-    const startY = topBarRect.top + Math.random() * topBarRect.height;
+    // 获取起点和终点
+    const startPos = getParticleStartPosition();
+    const targetPos = getParticleTargetPosition();
     
     const particle = document.createElement('div');
     particle.classList.add('particle');
     
     // 设置粒子起始位置（绝对坐标）
-    particle.style.left = `${startX}px`;
-    particle.style.top = `${startY}px`;
+    particle.style.left = `${startPos.x}px`;
+    particle.style.top = `${startPos.y}px`;
     
-    // 缩小粒子尺寸，减少渲染压力
+    // 粒子尺寸
     const size = Math.random() * 5 + 3;
     particle.style.width = `${size}px`;
     particle.style.height = `${size}px`;
@@ -281,9 +298,9 @@ function createParticle() {
     const duration = Math.random() * 1.2 + 0.4;
     particle.style.animationDuration = `${duration}s`;
     
-    // 计算粒子目标偏移量
-    particle.style.setProperty('--target-x', targetPos.x - startX);
-    particle.style.setProperty('--target-y', targetPos.y - startY);
+    // 计算粒子目标偏移量（终点 - 起点）
+    particle.style.setProperty('--target-x', targetPos.x - startPos.x);
+    particle.style.setProperty('--target-y', targetPos.y - startPos.y);
     particle.style.animationName = 'particle-to-energy';
     
     if (isDragDirectionCorrect()) {
@@ -435,7 +452,7 @@ function isInTargetZone() {
     return orangeProgress >= targetStart && orangeProgress < targetEnd;
 }
 
-// ===================== 能量条更新 =====================
+// ===================== 能量条更新（修复：显示进度文字 + 横向条用width） =====================
 function updateGreenBarsDisplay() {
     let remainingEnergy = totalGreenEnergy;
     const currentFullBars = getAvailableFullBars();
@@ -444,25 +461,44 @@ function updateGreenBarsDisplay() {
     }
     lastFullBars = currentFullBars;
     
-    // 横向能量条：width改为height（适配HTML结构）
+    // 横向能量条：使用width（修正之前的height错误）
     for (let i = 0; i < greenFills.length; i++) {
-        const fillPercent = Math.min(100, (remainingEnergy / currentConfig.barCapacity) * 100);
-        greenFills[i].style.height = `${fillPercent}%`; // 修正：横向条用height
+        const barCapacity = currentConfig.barCapacity;
+        const fillValue = Math.min(barCapacity, remainingEnergy);
+        const fillPercent = (fillValue / barCapacity) * 100;
+        
+        // 更新能量条填充宽度
+        greenFills[i].style.width = `${fillPercent}%`;
+        
+        // 更新能量条文字
+        if (greenBarTexts[i]) {
+            greenBarTexts[i].textContent = `${Math.round(fillValue)}/${barCapacity}`;
+        }
+        
+        // 高亮满格能量条
         if (fillPercent >= 100) {
             greenFills[i].classList.add('full');
         } else {
             greenFills[i].classList.remove('full');
         }
+        
+        // 能量条流动特效
         if (fillPercent > 0 && fillPercent < 100 && remainingEnergy > 0) {
             greenEffects[i].classList.add('active');
         } else {
             greenEffects[i].classList.remove('active');
         }
-        remainingEnergy -= currentConfig.barCapacity;
+        
+        remainingEnergy -= barCapacity;
         if (remainingEnergy <= 0) break;
     }
+    
+    // 清空剩余能量条
     for (let i = Math.ceil(totalGreenEnergy / currentConfig.barCapacity); i < greenFills.length; i++) {
-        greenFills[i].style.height = '0%'; // 修正：横向条用height
+        greenFills[i].style.width = '0%';
+        if (greenBarTexts[i]) {
+            greenBarTexts[i].textContent = '0/100';
+        }
         greenFills[i].classList.remove('full');
         greenEffects[i].classList.remove('active');
     }
@@ -489,7 +525,7 @@ function updateFishHealthUI() {
     fishHealth = Math.max(0, Math.min(fishHealthMax, fishHealth));
     const healthPercent = fishHealth / fishHealthMax;
     const healthDeg = healthPercent * 360;
-    fishHealthFill.style.setProperty('--health-deg', `${healthDeg}deg`); // 统一用CSS变量
+    fishHealthFill.style.setProperty('--health-deg', `${healthDeg}deg`);
     fishHealthText.textContent = `${Math.round(fishHealth)}/${fishHealthMax}`;
 }
 
@@ -563,6 +599,7 @@ function updateUI() {
         let statusText, statusColor;
         const targetStart = isBossMode ? targetZoneLeft : BASE_TARGET_START;
         const targetEnd = isBossMode ? (targetZoneLeft + targetZoneWidth) : BASE_TARGET_END;
+        // 放大状态文字内容的字号（通过CSS实现，这里保证内容完整）
         if (orangeProgress >= 100) {
             statusText = `${isBossMode ? (isBossPhase2 ? '[BOSS模式-第二阶段] ' : '[BOSS模式] ') : ''}[警告！] 橙色条已满！耐力掉血翻倍 | 黄色区: ${Math.round(targetStart)}%-${Math.round(targetEnd)}% | 总能量: ${Math.round(totalGreenEnergy)}/${currentConfig.maxEnergy}`;
             statusColor = '#dc3545';
@@ -681,14 +718,17 @@ function resetGame() {
     updatePlayerDirectionDisplay();
     particleContainer.innerHTML = '';
     
-    // 能量条重置
-    greenFills.forEach(fill => {
-        fill.style.height = '0%';
+    // 能量条重置（包含文字）
+    greenFills.forEach((fill, index) => {
+        fill.style.width = '0%';
         fill.classList.remove('full');
+        if (greenBarTexts[index]) {
+            greenBarTexts[index].textContent = '0/100';
+        }
     });
     greenEffects.forEach(effect => effect.classList.remove('active'));
     
-    // 状态文本重置
+    // 状态文本重置（放大适配）
     const defaultStatus = isBossMode 
         ? `[BOSS模式] 按住并拖动收线按钮 | 黄色判定区：动态变化 | 总能量：0/${currentConfig.maxEnergy}`
         : `按住并拖动收线按钮 | 黄色判定区：60%（含）-85%（不含） | 总能量：0/${currentConfig.maxEnergy}`;

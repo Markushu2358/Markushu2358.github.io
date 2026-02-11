@@ -13,10 +13,10 @@ body {
     display: flex;
     flex-direction: column;
     align-items: center;
-    width: 100vw;          /* 宽度占满屏幕 */
-    height: 100vh;         /* 高度占满屏幕 */
-    overflow: hidden;      /* 禁止滚动，内容全在屏幕内 */
-    padding: 0;            /* 移除默认内边距 */
+    width: 100vw;          
+    height: 100vh;         
+    overflow: hidden;      
+    padding: 0;            
     /* 适配刘海屏/底部导航栏 */
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
@@ -27,12 +27,12 @@ body {
 /* 核心：主容器填满屏幕，用flex替代grid实现高度自适应 */
 .main-wrapper {
     width: 100%;
-    height: 100%;          /* 高度填满body */
-    max-width: 500px;      /* 限制最大宽度，避免平板拉伸 */
+    height: 100%;          
+    max-width: 500px;      
     display: flex;
-    flex-direction: column;/* 垂直流式布局 */
-    gap: 8px;              /* 缩小间距，节省高度 */
-    padding: 8px;          /* 轻微内边距，避免贴边 */
+    flex-direction: column;
+    gap: 8px;              
+    padding: 8px;          
 }
 
 /* 顶部区域：自适应高度，不占过多空间 */
@@ -42,14 +42,14 @@ body {
     gap: 6px;
     padding: 4px;
     width: 100%;
-    flex-shrink: 0;        /* 不被压缩 */
+    flex-shrink: 0;        
 }
 
 .fish-select-group {
     display: flex;
     gap: 8px;
     justify-content: center;
-    margin-top: 8px; /* 增加上边距，和重置按钮分开 */
+    margin-top: 8px; 
     flex-wrap: wrap;
 }
 
@@ -71,7 +71,7 @@ body {
 .boss-fish-btn { background: #d81b60; }
 .boss-fish-btn.active { background: #b0003a; box-shadow: 0 0 0 2px rgba(216, 27, 96, 0.3); }
 
-/* 耐力条/能量条：降低高度，适配屏幕 */
+/* 耐力条/能量条：降低高度，适配屏幕 + 恢复能量进度文字 */
 .player-stamina-horizontal {
     width: 100%;
     height: 38px;
@@ -116,6 +116,19 @@ body {
     border-radius: 6px;
     overflow: hidden;
     position: relative;
+}
+
+/* 新增：能量条进度文字 */
+.green-bar-text {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-weight: bold;
+    font-size: 12px;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    z-index: 1;
 }
 
 .green-fill-horizontal {
@@ -172,8 +185,8 @@ body {
     flex-direction: column;
     align-items: center;
     justify-content: center;
-    flex-grow: 1;          /* 占满剩余高度 */
-    min-height: 280px;     /* 最小高度，避免过小 */
+    flex-grow: 1;          
+    min-height: 280px;     
 }
 
 .pull-bar-section { width: 100%; }
@@ -231,7 +244,7 @@ body {
     opacity: 0.9;
     border-radius: 3px;
     transition: width 0.1s ease;
-    z-index: 1; /* 低于target-zone的z-index:3 */
+    z-index: 1;
 }
 
 .orange-fill.bullet-time {
@@ -267,30 +280,30 @@ body {
     border-right: 2px solid #ffd700;
     box-sizing: border-box;
     background: rgba(255, 215, 0, 0.2);
-    z-index: 3; /* 关键：层级高于橙色条 */
+    z-index: 3;
     transition: left 0.1s linear, width 0.1s linear;
 }
 
 /* 粒子容器：全屏布局，最高层级，允许溢出 */
 .particle-container {
-    position: fixed; /* 脱离父容器限制，全屏显示 */
+    position: fixed;
     top: 0;
     left: 0;
-    width: 100vw;    /* 全屏宽度 */
-    height: 100vh;   /* 全屏高度 */
-    pointer-events: none; /* 不影响其他元素交互 */
-    z-index: 9999;   /* 最高层级，确保粒子在所有元素上方 */
-    overflow: visible; /* 允许粒子超出容器，飞到能量条位置 */
+    width: 100vw;    
+    height: 100vh;   
+    pointer-events: none;
+    z-index: 9999;   
+    overflow: visible;
 }
 
 .particle {
     position: absolute;
-    width: 4px;   /* 缩小粒子，减少性能消耗 */
+    width: 4px;
     height: 4px;
     background: #00bfa5;
     border-radius: 50%;
     opacity: 0;
-    z-index: 9999; /* 粒子自身也设最高层级 */
+    z-index: 9999;
 }
 
 @keyframes particle-to-energy {
@@ -405,32 +418,46 @@ body {
     width: 100%;
     display: flex;
     flex-direction: column;
-    flex-shrink: 0;        /* 不被压缩 */
+    flex-shrink: 0;        
 }
 
+/* 重构按钮布局：收线按钮居中，技能1/3分上下 */
 .button-container {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 8px;
+    gap: 10px;
     margin-bottom: 8px;
 }
 
-.button-row-1 {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    width: 100%;
-}
-
-.button-row-2, .button-row-3 {
+/* 收线按钮行：单独一行居中 */
+.reel-button-row {
     display: flex;
     justify-content: center;
-    align-items: center;
     width: 100%;
 }
 
-/* 收线按钮：缩小尺寸，适配触控 */
+/* 技能按钮行：技能1/3并排，技能2单独一行 */
+.skill-buttons-row-1 {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    gap: 8px;
+}
+
+.skill-buttons-row-2 {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+.reset-button-row {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+/* 收线按钮：保持原有尺寸 */
 .reel-button {
     width: 120px;
     height: 120px;
@@ -470,9 +497,9 @@ body {
 
 .reel-button.dragging { background: #1565c0; }
 
-/* 按钮通用样式：适配触控 */
+/* 按钮通用样式：技能按钮改为正方形，减少横向占用 */
 .reset-button {
-    padding: 10px 25px;
+    padding: 12px 0;
     font-size: 16px;
     font-weight: bold;
     color: white;
@@ -491,9 +518,10 @@ body {
     transform: scale(0.96);
 }
 
+/* 技能按钮：改为正方形/等宽按钮，缩小字体，减少横向占用 */
 .skill-button {
-    padding: 8px 15px;
-    font-size: 13px;
+    padding: 12px 0;
+    font-size: 12px;
     font-weight: bold;
     color: white;
     border: none;
@@ -502,8 +530,12 @@ body {
     transition: background 0.2s, transform 0.1s;
     user-select: none;
     flex: 1;
-    min-width: 90px;
+    min-width: 0; /* 移除最小宽度限制 */
     box-shadow: 0 2px 6px rgba(0,0,0,0.1);
+    text-align: center;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
 }
 
 .skill1-button { background: #4caf50; }
@@ -518,24 +550,26 @@ body {
 .skill3-button:hover, .skill3-button:active { background: #f57c00; transform: scale(0.96); }
 .skill3-button:disabled { background: #9e9e9e; cursor: not-allowed; transform: none; box-shadow: none; }
 
-/* 状态文本：适配水域背景，调整样式 */
+/* 状态文本：放大字号，适配不同屏幕 */
 .status {
-    font-size: 12px;
+    font-size: 15px; /* 原12px → 15px */
     color: #666;
     text-align: center;
     margin-bottom: 4px;
-    padding: 6px;
+    padding: 8px 6px; /* 增加内边距 */
     border-radius: 6px;
     transition: all 0.2s;
-    line-height: 1.3;
+    line-height: 1.4;
+    font-weight: 500;
 }
 
 /* 水域中的状态文本样式优化 */
 .water-section .status {
     margin-top: 15px;
     width: 100%;
-    color: white; /* 适配蓝色水域背景 */
-    text-shadow: 0 1px 2px rgba(0,0,0,0.5); /* 增加文字阴影，提升可读性 */
+    color: white;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    font-size: 16px; /* 水域内再放大1px */
 }
 
 .status.correct {
@@ -617,32 +651,12 @@ body {
     .fish-health-container { width: 120px; height: 120px; }
     .fish-icon { width: 50px; height: 50px; }
     
-    /* 按钮行强制换行，适配窄屏 */
-    .button-row-1 {
-        flex-wrap: wrap;
-        gap: 10px;
-        justify-content: center;
-    }
-    .reel-button {
-        order: -1;
-        margin-bottom: 8px;
-    }
-    .button-row-1 .skill-button {
-        width: 45%;
-        min-width: 80px;
-    }
-    .skill-button, .reset-button {
-        width: 100%;
-        padding: 8px 0;
-    }
-    .direction-display {
-        flex-direction: column;
-        gap: 6px;
-        text-align: center;
-        padding: 6px;
-    }
-    .status { font-size: 11px; padding: 4px; }
-    .bullet-time-notice { font-size: 14px; padding: 4px 15px; }
+    /* 状态文字进一步放大 */
+    .status { font-size: 14px; }
+    .water-section .status { font-size: 15px; }
+    
+    /* 技能按钮字体更小，适配极小屏 */
+    .skill-button { font-size: 11px; padding: 10px 0; }
 }
 
 /* 极小屏幕（如iPhone SE/小安卓机） */
@@ -652,4 +666,8 @@ body {
     .fish-icon { width: 40px; height: 40px; }
     .top-bar { height: 40px; }
     .water-section { min-height: 220px; }
+    
+    /* 极小屏状态文字适配 */
+    .status { font-size: 13px; padding: 6px 4px; }
+    .water-section .status { font-size: 14px; }
 }
