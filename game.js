@@ -1,4 +1,4 @@
-// 获取DOM元素
+// ===================== 全局DOM元素获取（只获取一次，避免重复） =====================
 const orangeFill = document.getElementById('orangeFill');
 const particleContainer = document.getElementById('particleContainer');
 const targetZone = document.getElementById('targetZone');
@@ -33,7 +33,7 @@ const gameOverScreen = document.getElementById('gameOverScreen');
 const gameOverText = document.getElementById('gameOverText');
 const gameOverResetBtn = document.getElementById('gameOverResetBtn');
 
-// 游戏配置（保留原始数值，优化移动端参数）
+// ===================== 游戏配置（统一管理，避免硬编码） =====================
 const DEFAULT_CONFIG = {
     playerStamina: 2000,
     normalFishHealth: 3000,
@@ -78,13 +78,13 @@ const DEFAULT_CONFIG = {
     centerPullStrength: 2.5,
     correctEnergyMultiplier: 2.5,
     playerSlowDownRate: 0.5,
-    playerNormalDownRate: 1.0
+    playerNormalDownRate: 1.0,
+    fishPullSpeedNormal: 2,// 普通鱼拉力速度
+    fishPullSpeedBoss: 3   // BOSS鱼拉力速度
 };
 
-// 当前配置
-const currentConfig = { ...DEFAULT_CONFIG };
-
-// 核心状态
+// ===================== 全局状态变量（统一初始化，避免重复定义） =====================
+let currentConfig = { ...DEFAULT_CONFIG };
 let orangeProgress = 0;
 let totalGreenEnergy = 0;
 let fishHealth = currentConfig.normalFishHealth;
@@ -108,14 +108,15 @@ let sizeChangeTimer = null;
 let isBulletTime = false;
 let bulletTimeTimer = null;
 let lastFullBars = 0;
-let fishDirection = 1;
+let fishDirection = 1; // 1=右，-1=左（统一用数字，避免字符串/数字混用）
 let fishDirectionTimer = null;
 let isDragging = false;
 let dragStartX = 0;
 let dragDirection = 0;
-let playerDirection = 1;
+let playerDirection = 1; // 1=右，-1=左
+let currentFishType = 'normal'; // normal/boss
 
-// 基础判定区域范围
+// ===================== 基础常量（统一定义） =====================
 const BASE_TARGET_START = 60;
 const BASE_TARGET_END = 85;
 const BASE_TARGET_CENTER = (BASE_TARGET_START + BASE_TARGET_END) / 2;
@@ -123,14 +124,6 @@ let BOSS_TARGET_MIN_LEFT = 40;
 let BOSS_TARGET_MAX_LEFT = 90;
 let BOSS_TARGET_MIN_WIDTH = 10;
 let BOSS_TARGET_MAX_WIDTH = 25;
-
-// 数值配置
-const GREEN_SLOW = currentConfig.greenSlow;
-const GREEN_FAST = currentConfig.greenFast;
-const FISH_HEALTH_SLOW = currentConfig.fishSlow;
-const FISH_HEALTH_FAST = currentConfig.fishFast;
-const BULLET_TIME_DECREASE = currentConfig.bulletTimeDec;
-const BULLET_TIME_DURATION = currentConfig.bulletTimeDur;
 
 // ===================== 玩家朝向核心功能 =====================
 function updatePlayerDirectionDisplay() {
@@ -150,7 +143,7 @@ function setPlayerDirection(direction) {
     }
 }
 
-// ===================== 摆杆玩法核心功能 =====================
+// ===================== 鱼方向切换功能 =====================
 function getRandomFishDirChangeTime() {
     return Math.random() * (currentConfig.fishDirChangeMax - currentConfig.fishDirChangeMin) + currentConfig.fishDirChangeMin;
 }
@@ -160,8 +153,10 @@ function switchFishDirection() {
     fishDirection = fishDirection === 1 ? -1 : 1;
     if (fishDirection === 1) {
         fishIcon.classList.remove('left');
+        fishDirectionText.textContent = '鱼游动方向：右';
     } else {
         fishIcon.classList.add('left');
+        fishDirectionText.textContent = '鱼游动方向：左';
     }
     clearTimeout(fishDirectionTimer);
     fishDirectionTimer = setTimeout(switchFishDirection, getRandomFishDirChangeTime());
@@ -172,7 +167,7 @@ function initFishDirectionTimer() {
     fishDirectionTimer = setTimeout(switchFishDirection, getRandomFishDirChangeTime());
 }
 
-// 优化移动端拖动阈值（从30px降到20px，更灵敏）
+// ===================== 拖动交互功能（移动端优化） =====================
 function handleDragStart(e) {
     e.preventDefault();
     if (gameOver) return;
@@ -227,6 +222,7 @@ function isDragDirectionCorrect() {
     return dragDirection === -fishDirection && dragDirection !== 0;
 }
 
+// ===================== 拉力条居中逻辑 =====================
 function getTargetCenter() {
     if (isBossMode) {
         return targetZoneLeft + (targetZoneWidth / 2);
@@ -245,7 +241,7 @@ function pullToCenter() {
     }
 }
 
-// ===================== 粒子特效核心功能（移动端优化） =====================
+// ===================== 粒子特效（移动端性能优化） =====================
 function getEnergyBarPosition(barIndex) {
     const bar = greenFills[barIndex];
     const rect = bar.getBoundingClientRect();
@@ -255,7 +251,6 @@ function getEnergyBarPosition(barIndex) {
     return { x: targetX, y: targetY };
 }
 
-// 减少粒子数量，优化移动端性能
 function createParticle() {
     if (!isInTargetZone() || gameOver) return;
     const targetBarIndex = Math.floor(Math.random() * greenFills.length);
@@ -299,18 +294,17 @@ function createParticle() {
     }, duration * 1000);
 }
 
-// 减少每帧粒子生成数量，优化移动端性能
 function particleLoop() {
     if (isInTargetZone() && !gameOver) {
-        const baseCount = Math.floor(Math.random() * 1) + 1; // 从1-2个降到1个
-        const particleCount = isDragDirectionCorrect() ? baseCount * 1.5 : baseCount;
+        const baseCount = Math.floor(Math.random() * 1) + 1;
+        const particleCount = isDragDirectionCorrect() ? Math.floor(baseCount * 1.5) : baseCount;
         for (let i = 0; i < particleCount; i++) {
             createParticle();
         }
     }
 }
 
-// ===================== 核心逻辑 =====================
+// ===================== 核心数值计算 =====================
 function getRandomOrangeValue() {
     let baseValue = Math.random() * (currentConfig.orangeMax - currentConfig.orangeMin) + currentConfig.orangeMin;
     if (isHolding && dragDirection !== 0 && !isDragDirectionCorrect()) {
@@ -328,10 +322,7 @@ function getSlowOrangeDecValue() {
 }
 
 function getOrangeDownRate() {
-    if (playerDirection === -fishDirection) {
-        return currentConfig.playerSlowDownRate;
-    }
-    return currentConfig.playerNormalDownRate;
+    return playerDirection === -fishDirection ? currentConfig.playerSlowDownRate : currentConfig.playerNormalDownRate;
 }
 
 function getRandomMoveSpeed() {
@@ -348,6 +339,7 @@ function getRandomChangeTime() {
     return Math.random() * (currentConfig.dirChangeMax - currentConfig.dirChangeMin) + currentConfig.dirChangeMin;
 }
 
+// ===================== BOSS阶段判断 =====================
 function checkBossPhase2() {
     if (!isBossMode) return false;
     const currentHpPercent = (fishHealth / fishHealthMax) * 100;
@@ -366,6 +358,7 @@ function checkBossPhase2() {
     return isPhase2;
 }
 
+// ===================== 子弹时间功能 =====================
 function startBulletTime() {
     if (isBulletTime) return;
     isBulletTime = true;
@@ -390,6 +383,7 @@ function endBulletTime() {
     status.style.color = inTargetZone ? '#ffffff' : '#f44336';
 }
 
+// ===================== BOSS判定区动态更新 =====================
 function updateTargetZone() {
     if (!isBossMode) return;
     checkBossPhase2();
@@ -436,6 +430,7 @@ function isInTargetZone() {
     return orangeProgress >= targetStart && orangeProgress < targetEnd;
 }
 
+// ===================== 能量条更新 =====================
 function updateGreenBarsDisplay() {
     let remainingEnergy = totalGreenEnergy;
     const currentFullBars = getAvailableFullBars();
@@ -443,9 +438,11 @@ function updateGreenBarsDisplay() {
         startBulletTime();
     }
     lastFullBars = currentFullBars;
+    
+    // 横向能量条：width改为height（适配HTML结构）
     for (let i = 0; i < greenFills.length; i++) {
         const fillPercent = Math.min(100, (remainingEnergy / currentConfig.barCapacity) * 100);
-        greenFills[i].style.width = `${fillPercent}%`;
+        greenFills[i].style.height = `${fillPercent}%`; // 修正：横向条用height
         if (fillPercent >= 100) {
             greenFills[i].classList.add('full');
         } else {
@@ -460,7 +457,7 @@ function updateGreenBarsDisplay() {
         if (remainingEnergy <= 0) break;
     }
     for (let i = Math.ceil(totalGreenEnergy / currentConfig.barCapacity); i < greenFills.length; i++) {
-        greenFills[i].style.width = '0%';
+        greenFills[i].style.height = '0%'; // 修正：横向条用height
         greenFills[i].classList.remove('full');
         greenEffects[i].classList.remove('active');
     }
@@ -470,6 +467,7 @@ function getAvailableFullBars() {
     return Math.floor(totalGreenEnergy / currentConfig.barCapacity);
 }
 
+// ===================== 技能按钮状态更新 =====================
 function updateSkillButtons() {
     const availableFullBars = getAvailableFullBars();
     skill1Button.disabled = availableFullBars < (currentConfig.skill1Cost / currentConfig.barCapacity) || gameOver;
@@ -481,11 +479,12 @@ function updateSkillButtons() {
     skill3Button.textContent = `技能3 (${currentConfig.skill3Cost/100}能量)`;
 }
 
+// ===================== UI更新 =====================
 function updateFishHealthUI() {
     fishHealth = Math.max(0, Math.min(fishHealthMax, fishHealth));
     const healthPercent = fishHealth / fishHealthMax;
     const healthDeg = healthPercent * 360;
-    fishHealthFill.style.setProperty('--health-deg', `${healthDeg}deg`);
+    fishHealthFill.style.setProperty('--health-deg', `${healthDeg}deg`); // 统一用CSS变量
     fishHealthText.textContent = `${Math.round(fishHealth)}/${fishHealthMax}`;
 }
 
@@ -496,7 +495,7 @@ function updatePlayerStaminaUI() {
     playerStaminaText.textContent = `耐力：${Math.round(playerStamina)}/${playerStaminaMax}`;
 }
 
-// 优化游戏结束逻辑，显示弹窗
+// ===================== 游戏结束判断 =====================
 function checkGameOver() {
     if (fishHealth <= 0) {
         gameOver = true;
@@ -523,6 +522,7 @@ function checkGameOver() {
     }
 }
 
+// ===================== 主UI更新循环 =====================
 function updateUI() {
     if (gameOver) return;
     orangeProgress = Math.max(0, Math.min(100, orangeProgress));
@@ -545,7 +545,7 @@ function updateUI() {
     updatePlayerStaminaUI();
 
     const inTargetZone = isInTargetZone();
-    let greenIncrement = inTargetZone ? GREEN_FAST : GREEN_SLOW;
+    let greenIncrement = inTargetZone ? currentConfig.greenFast : currentConfig.greenSlow;
     if (isHolding && dragDirection !== 0 && isDragDirectionCorrect()) {
         greenIncrement *= currentConfig.correctEnergyMultiplier;
     }
@@ -576,13 +576,14 @@ function updateUI() {
     checkGameOver();
 }
 
+// ===================== 主游戏循环 =====================
 function loop() {
     if (gameOver) return;
     if (isHolding) {
         const randomInc = getRandomOrangeValue();
         orangeProgress += randomInc;
         const inTargetZone = isInTargetZone();
-        fishHealth -= inTargetZone ? FISH_HEALTH_FAST : FISH_HEALTH_SLOW;
+        fishHealth -= inTargetZone ? currentConfig.fishFast : currentConfig.fishSlow;
         if (!inTargetZone) {
             const damageMultiplier = orangeProgress >= 100 ? currentConfig.fullHpMultiplier : 1;
             const directionPenalty = (dragDirection !== 0 && !isDragDirectionCorrect()) ? 1.5 : 1;
@@ -593,7 +594,7 @@ function loop() {
         if (isBulletTime) {
             randomDec = currentConfig.bulletTimeDec;
             const inTargetZone = isInTargetZone();
-            fishHealth -= inTargetZone ? FISH_HEALTH_FAST : FISH_HEALTH_SLOW;
+            fishHealth -= inTargetZone ? currentConfig.fishFast : currentConfig.fishSlow;
         } else {
             const inTargetZone = isInTargetZone();
             randomDec = inTargetZone ? getSlowOrangeDecValue() : getRandomOrangeValue();
@@ -604,21 +605,31 @@ function loop() {
     updateUI();
 }
 
+// ===================== 鱼模式切换（整合逻辑，避免冲突） =====================
 function switchFishMode(isBoss) {
     isBossMode = isBoss;
+    currentFishType = isBoss ? 'boss' : 'normal';
     isBossPhase2 = false;
     normalFishBtn.classList.toggle('active', !isBoss);
     bossFishBtn.classList.toggle('active', isBoss);
+    
+    // 重置鱼参数
     fishHealthMax = isBoss ? currentConfig.bossFishHealth : currentConfig.normalFishHealth;
     fishHealth = fishHealthMax;
+    fishDirection = isBoss ? -1 : 1; // BOSS初始向左，普通鱼初始向右
+    fishIcon.classList.toggle('left', isBoss);
+    fishDirectionText.textContent = `鱼游动方向：${fishDirection === 1 ? '右' : '左'}`;
+    
+    // 重置判定区
     BOSS_TARGET_MIN_LEFT = 40;
     BOSS_TARGET_MAX_LEFT = 90;
     BOSS_TARGET_MIN_WIDTH = 10;
     BOSS_TARGET_MAX_WIDTH = 25;
-    resetGame();
     if (isBossMode) {
         targetZoneLeft = 60;
         targetZoneWidth = 25;
+        targetZone.style.left = `${targetZoneLeft}%`;
+        targetZone.style.width = `${targetZoneWidth}%`;
         randomizeMoveDirection();
         randomizeSizeDirection();
     } else {
@@ -629,10 +640,14 @@ function switchFishMode(isBoss) {
         clearTimeout(directionChangeTimer);
         clearTimeout(sizeChangeTimer);
     }
+    
+    // 重置游戏状态
+    resetGame();
 }
 
-// 重置游戏时隐藏结束弹窗
+// ===================== 游戏重置（统一逻辑，移除重复定义） =====================
 function resetGame() {
+    // 核心状态重置
     orangeProgress = 0;
     totalGreenEnergy = 0;
     fishHealth = fishHealthMax;
@@ -643,32 +658,32 @@ function resetGame() {
     isBulletTime = false;
     isBossPhase2 = false;
     lastFullBars = 0;
-    fishDirection = 1;
     dragDirection = 0;
     playerDirection = 1;
     
+    // 计时器清空
     clearTimeout(bulletTimeTimer);
     clearTimeout(fishDirectionTimer);
+    clearTimeout(directionChangeTimer);
+    clearTimeout(sizeChangeTimer);
+    
+    // UI重置
     orangeFill.classList.remove('bullet-time', 'full-warning');
     bulletTimeNotice.classList.remove('show');
     orangeFill.style.width = '0%';
-    orangeFill.style.display = 'block';
     reelButton.classList.remove('dragging', 'correct-direction');
-    fishIcon.classList.remove('left');
+    fishIcon.classList.toggle('left', fishDirection === -1);
     updatePlayerDirectionDisplay();
     particleContainer.innerHTML = '';
     
-    if (isBossMode) {
-        targetZoneLeft = 60;
-        targetZoneWidth = 25;
-        targetZone.style.left = `${targetZoneLeft}%`;
-        targetZone.style.width = `${targetZoneWidth}%`;
-    } else {
-        targetZone.style.left = `${BASE_TARGET_START}%`;
-        targetZone.style.width = `${25}%`;
-    }
+    // 能量条重置
+    greenFills.forEach(fill => {
+        fill.style.height = '0%';
+        fill.classList.remove('full');
+    });
+    greenEffects.forEach(effect => effect.classList.remove('active'));
     
-    greenFills.forEach(fill => fill.classList.remove('full'));
+    // 状态文本重置
     const defaultStatus = isBossMode 
         ? `[BOSS模式] 按住并拖动收线按钮 | 黄色判定区：动态变化 | 总能量：0/${currentConfig.maxEnergy}`
         : `按住并拖动收线按钮 | 黄色判定区：60%（含）-85%（不含） | 总能量：0/${currentConfig.maxEnergy}`;
@@ -677,19 +692,21 @@ function resetGame() {
     status.classList.remove('correct', 'wrong');
     
     // 隐藏游戏结束弹窗
-    gameOverScreen.style.display = 'none';
+    if (gameOverScreen) gameOverScreen.style.display = 'none';
     
+    // 重新初始化定时器
     initFishDirectionTimer();
     if (intervalId) clearInterval(intervalId);
-    intervalId = setInterval(loop, 60); // 降低帧率到60ms/帧，减少移动端耗电
+    intervalId = setInterval(loop, 60);
     
+    // 更新UI
     updateUI();
 }
 
+// ===================== 技能功能 =====================
 function useSkill1() {
     if (gameOver || getAvailableFullBars() < (currentConfig.skill1Cost / currentConfig.barCapacity)) return;
     totalGreenEnergy -= currentConfig.skill1Cost;
-    totalGreenEnergy = Math.max(0, totalGreenEnergy);
     fishHealth -= currentConfig.skill1Damage;
     updateGreenBarsDisplay();
     updateFishHealthUI();
@@ -701,7 +718,6 @@ function useSkill1() {
 function useSkill2() {
     if (gameOver || getAvailableFullBars() < (currentConfig.skill2Cost / currentConfig.barCapacity)) return;
     totalGreenEnergy -= currentConfig.skill2Cost;
-    totalGreenEnergy = Math.max(0, totalGreenEnergy);
     playerStamina += currentConfig.skill2Heal;
     playerStamina = Math.min(playerStaminaMax, playerStamina);
     updateGreenBarsDisplay();
@@ -713,7 +729,6 @@ function useSkill2() {
 function useSkill3() {
     if (gameOver || getAvailableFullBars() < (currentConfig.skill3Cost / currentConfig.barCapacity)) return;
     totalGreenEnergy -= currentConfig.skill3Cost;
-    totalGreenEnergy = Math.max(0, totalGreenEnergy);
     fishHealth -= currentConfig.skill3Damage;
     updateGreenBarsDisplay();
     updateFishHealthUI();
@@ -722,15 +737,13 @@ function useSkill3() {
     status.textContent = `${status.textContent.split('|')[0]} | 技能3！造成${currentConfig.skill3Damage}高额伤害`;
 }
 
-// 优化移动端触摸事件，添加passive: false确保preventDefault生效
+// ===================== 事件绑定（统一管理，避免重复） =====================
 function bindEvents() {
-    // 鼠标事件
+    // 鼠标/触摸拖动事件
     reelButton.addEventListener('mousedown', handleDragStart);
     document.addEventListener('mousemove', handleDragMove);
     document.addEventListener('mouseup', handleDragEnd);
     document.addEventListener('mouseleave', handleDragEnd);
-    
-    // 触摸事件（优化移动端响应）
     reelButton.addEventListener('touchstart', handleDragStart, { passive: false });
     document.addEventListener('touchmove', handleDragMove, { passive: false });
     document.addEventListener('touchend', handleDragEnd);
@@ -738,172 +751,39 @@ function bindEvents() {
     
     // 重置按钮
     resetButton.addEventListener('click', resetGame);
-    gameOverResetBtn.addEventListener('click', resetGame); // 绑定结束弹窗的重置按钮
+    if (gameOverResetBtn) gameOverResetBtn.addEventListener('click', resetGame);
     
     // 技能按钮
-skill1Button.addEventListener('click', useSkill1);
-skill2Button.addEventListener('click', useSkill2);
-skill3Button.addEventListener('click', useSkill3);
-
-// 鱼模式切换 - 普通鱼
-normalFishBtn.addEventListener('click', () => {
-    // 切换按钮激活样式
-    normalFishBtn.classList.add('active');
-    bossFishBtn.classList.remove('active');
+    skill1Button.addEventListener('click', useSkill1);
+    skill2Button.addEventListener('click', useSkill2);
+    skill3Button.addEventListener('click', useSkill3);
     
-    // 切换鱼类型并重置对应参数
-    currentFishType = 'normal'; // 全局变量：标记当前鱼类型
-    resetFishStats('normal');   // 重置普通鱼的血量、拉力等参数
-    updateFishUI();            // 更新鱼血量UI、图标等
-    resetPullBar();            // 重置拉力条状态
-    updateStatusText();        // 更新底部状态提示
-    console.log('切换为普通鱼模式');
-});
-
-// 鱼模式切换 - BOSS鱼
-bossFishBtn.addEventListener('click', () => {
-    // 切换按钮激活样式
-    bossFishBtn.classList.add('active');
-    normalFishBtn.classList.remove('active');
-    
-    // 切换鱼类型并重置对应参数
-    currentFishType = 'boss';
-    resetFishStats('boss');     // 重置BOSS鱼的血量、拉力等参数
-    updateFishUI();            // 更新鱼血量UI、图标等
-    resetPullBar();            // 重置拉力条状态
-    updateStatusText();        // 更新底部状态提示
-    console.log('切换为BOSS鱼模式');
-});
-
-// 重置按钮事件监听
-resetButton.addEventListener('click', resetGame);
-
-// -------------------------- 核心辅助函数 --------------------------
-// 1. 重置鱼的基础属性（区分普通鱼/BOSS鱼）
-function resetFishStats(fishType) {
-    if (fishType === 'normal') {
-        // 普通鱼参数
-        fishHealth = 3000;      // 鱼血量
-        maxFishHealth = 3000;
-        fishPullSpeed = 2;      // 鱼拉动拉力条的速度
-        fishDirection = 'right';// 鱼初始游动方向
-    } else if (fishType === 'boss') {
-        // BOSS鱼参数（难度提升）
-        fishHealth = 5000;      // 更高血量
-        maxFishHealth = 5000;
-        fishPullSpeed = 3;      // 更快拉力条速度
-        fishDirection = 'left'; // 初始方向相反
-    }
-    
-    // 重置鱼游动方向显示
-    fishDirectionText.textContent = `鱼游动方向：${fishDirection === 'right' ? '右' : '左'}`;
+    // 鱼模式切换
+    normalFishBtn.addEventListener('click', () => switchFishMode(false));
+    bossFishBtn.addEventListener('click', () => switchFishMode(true));
 }
 
-// 2. 更新鱼血量UI（环形血条+文字）
-function updateFishUI() {
-    // 更新环形血条百分比
-    const healthPercent = (fishHealth / maxFishHealth) * 100;
-    fishHealthFill.style.background = `conic-gradient(#ff4d4d ${healthPercent}%, #333 ${healthPercent}%)`;
-    // 更新血量文字
-    fishHealthText.textContent = `${fishHealth}/${maxFishHealth}`;
-    // 更新鱼图标（可根据需求替换图片）
-    fishIcon.innerHTML = currentFishType === 'normal' ? '🐟' : '🐋';
+// ===================== 初始化游戏 =====================
+function initGame() {
+    // 初始化鱼方向
+    fishIcon.classList.remove('left');
+    fishDirectionText.textContent = '鱼游动方向：右';
+    initFishDirectionTimer();
+    
+    // 绑定事件
+    bindEvents();
+    
+    // 初始化判定区
+    targetZone.style.left = `${BASE_TARGET_START}%`;
+    targetZone.style.width = `${25}%`;
+    
+    // 启动游戏循环
+    if (intervalId) clearInterval(intervalId);
+    intervalId = setInterval(loop, 60);
+    
+    // 初始UI更新
+    updateUI();
 }
 
-// 3. 重置拉力条状态
-function resetPullBar() {
-    orangeFill.style.width = '50%'; // 拉力条回到初始位置
-    targetZone.style.left = '60%';  // 判定区回到默认位置
-    particleContainer.innerHTML = ''; // 清空粒子特效
-}
-
-// 4. 全局游戏重置（恢复所有初始状态）
-function resetGame() {
-    // 重置玩家耐力
-    playerStamina = 2000;
-    maxPlayerStamina = 2000;
-    playerStaminaFill.style.width = '100%';
-    playerStaminaText.textContent = `耐力：${playerStamina}/${maxPlayerStamina}`;
-    
-    // 重置能量条（3个绿色条）
-    greenFill1.style.height = '0%';
-    greenFill2.style.height = '0%';
-    greenFill3.style.height = '0%';
-    totalEnergy = 0; // 总能量重置
-    greenEffect1.classList.remove('active');
-    greenEffect2.classList.remove('active');
-    greenEffect3.classList.remove('active');
-    
-    // 禁用所有技能按钮
-    skill1Button.disabled = true;
-    skill2Button.disabled = true;
-    skill3Button.disabled = true;
-    
-    // 重置鱼状态（根据当前选中的鱼类型）
-    resetFishStats(currentFishType);
-    updateFishUI();
-    
-    // 重置拉力条
-    resetPullBar();
-    
-    // 重置玩家朝向
-    playerDirection = 'right';
-    playerIcon.innerHTML = '🎣';
-    directionText.textContent = '朝右';
-    
-    // 重置子弹时间状态
-    bulletTimeActive = false;
-    bulletTimeNotice.style.display = 'none';
-    
-    // 更新底部状态文本
-    updateStatusText();
-    
-    console.log('游戏已重置为初始状态');
-}
-
-// 5. 更新底部状态提示文本
-function updateStatusText() {
-    status.textContent = `按住并拖动收线按钮（往鱼反方向）| 黄色判定区：60%（含）-85%（不含） | 总能量：${totalEnergy}/300`;
-}
-
-// -------------------------- 全局变量初始化（需放在代码开头） --------------------------
-// 建议你将这些全局变量放在JS文件最顶部，确保所有函数可访问
-let currentFishType = 'normal'; // 默认普通鱼
-let fishHealth = 3000;          // 鱼当前血量
-let maxFishHealth = 3000;       // 鱼最大血量
-let fishPullSpeed = 2;          // 鱼拉动拉力条的速度
-let fishDirection = 'right';    // 鱼游动方向
-let playerStamina = 2000;       // 玩家当前耐力
-let maxPlayerStamina = 2000;    // 玩家最大耐力
-let totalEnergy = 0;            // 总能量
-let bulletTimeActive = false;   // 子弹时间是否激活
-
-// 获取DOM元素（需放在代码开头，确保页面加载后获取）
-const normalFishBtn = document.getElementById('normalFishBtn');
-const bossFishBtn = document.getElementById('bossFishBtn');
-const resetButton = document.getElementById('resetButton');
-const skill1Button = document.getElementById('skill1Button');
-const skill2Button = document.getElementById('skill2Button');
-const skill3Button = document.getElementById('skill3Button');
-const fishHealthFill = document.getElementById('fishHealthFill');
-const fishHealthText = document.getElementById('fishHealthText');
-const fishDirectionText = document.getElementById('fishDirectionText');
-const fishIcon = document.getElementById('fishIcon');
-const playerStaminaFill = document.getElementById('playerStaminaFill');
-const playerStaminaText = document.getElementById('playerStaminaText');
-const greenFill1 = document.getElementById('greenFill1');
-const greenFill2 = document.getElementById('greenFill2');
-const greenFill3 = document.getElementById('greenFill3');
-const greenEffect1 = document.getElementById('greenEffect1');
-const greenEffect2 = document.getElementById('greenEffect2');
-const greenEffect3 = document.getElementById('greenEffect3');
-const orangeFill = document.getElementById('orangeFill');
-const targetZone = document.getElementById('targetZone');
-const particleContainer = document.getElementById('particleContainer');
-const playerIcon = document.getElementById('playerIcon');
-const directionText = document.getElementById('directionText');
-const bulletTimeNotice = document.getElementById('bulletTimeNotice');
-const status = document.getElementById('status');
-
-// 初始化游戏状态（页面加载时执行）
-resetGame();
+// 页面加载完成后初始化
+document.addEventListener('DOMContentLoaded', initGame);
