@@ -1,0 +1,859 @@
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    touch-action: none; /* 禁用浏览器默认触摸行为 */
+    -webkit-tap-highlight-color: transparent; /* 移除点击高亮 */
+}
+
+body {
+    font-family: Arial, sans-serif;
+    background: #f5f5f5;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    min-height: 100vh;
+    padding: 10px; /* 减少手机端内边距 */
+    overflow-x: hidden;
+    overflow-y: auto;
+    /* 适配刘海屏/底部导航栏 */
+    padding-top: env(safe-area-inset-top);
+    padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* 整体布局容器 - 竖屏优化 */
+.main-wrapper {
+    width: 100%;
+    max-width: 500px; /* 竖屏最大宽度限制，适配手机 */
+    display: grid;
+    grid-template-areas:
+        "top-section"
+        "water-section"
+        "player-direction-section"
+        "bottom-section";
+    grid-template-rows: auto auto auto 1fr;
+    gap: 15px; /* 减少间距，适配竖屏高度 */
+}
+
+/* 顶部区域 - 横向耐力和能量条 */
+.top-section {
+    grid-area: top-section;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 8px;
+    width: 100%;
+}
+
+/* 鱼模式选择器 - 竖屏优化 */
+.fish-select-group {
+    display: flex;
+    gap: 10px;
+    justify-content: center;
+    margin-bottom: 8px;
+    flex-wrap: wrap;
+}
+
+.fish-select-button {
+    padding: 8px 20px; /* 缩小按钮内边距 */
+    font-size: 16px; /* 适配手机字体 */
+    font-weight: bold;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+    min-width: 120px; /* 保证按钮最小宽度 */
+}
+
+.normal-fish-btn {
+    background: #2196f3;
+}
+
+.normal-fish-btn.active {
+    background: #1565c0;
+    box-shadow: 0 0 0 3px rgba(33, 150, 243, 0.3);
+}
+
+.boss-fish-btn {
+    background: #d81b60;
+}
+
+.boss-fish-btn.active {
+    background: #b0003a;
+    box-shadow: 0 0 0 3px rgba(216, 27, 96, 0.3);
+}
+
+/* 玩家耐力横向条 - 竖屏优化 */
+.player-stamina-horizontal {
+    width: 100%;
+    height: 45px; /* 降低高度 */
+    background: #e0e0e0;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+}
+
+.player-stamina-fill-horizontal {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 100%;
+    background: linear-gradient(90deg, #2E7D32, #4CAF50);
+    transition: width 0.1s linear;
+}
+
+.player-stamina-text-horizontal {
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    color: white;
+    font-weight: bold;
+    font-size: 16px; /* 适配手机字体 */
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    z-index: 1;
+}
+
+/* 绿色能量横向条容器 - 竖屏优化 */
+.green-bars-horizontal {
+    display: flex;
+    gap: 8px; /* 减少间距 */
+    width: 100%;
+}
+
+/* 绿色能量横向条 - 竖屏优化 */
+.green-bar-horizontal {
+    flex: 1;
+    height: 45px; /* 降低高度 */
+    background: #e0e0e0;
+    border-radius: 8px;
+    overflow: hidden;
+    position: relative;
+}
+
+.green-fill-horizontal {
+    position: absolute;
+    top: 0;
+    left: 0;
+    height: 100%;
+    width: 0%;
+    background: #00bfa5;
+    transition: width 0.05s linear;
+}
+
+/* 能量条满格特效 */
+.green-fill-horizontal.full {
+    background: linear-gradient(90deg, #00ff9d, #00bfa5);
+    box-shadow: 0 0 15px rgba(0, 255, 157, 0.7);
+    animation: glow 1s infinite alternate;
+}
+
+@keyframes glow {
+    from { box-shadow: 0 0 15px rgba(0, 255, 157, 0.7); }
+    to { box-shadow: 0 0 25px rgba(0, 255, 157, 1); }
+}
+
+.green-effect-horizontal {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(90deg, 
+        rgba(0,191,165,0) 0%, 
+        rgba(0,191,165,0.5) 50%, 
+        rgba(0,191,165,0) 100%);
+    opacity: 0;
+    animation: greenShimmerHorizontal 1.2s infinite linear;
+}
+
+.green-effect-horizontal.active {
+    opacity: 1;
+}
+
+@keyframes greenShimmerHorizontal {
+    0% { transform: translateX(-100%); }
+    100% { transform: translateX(100%); }
+}
+
+/* 水域区域 - 核心修改：增强自适应，确保包裹拉力条和血量圈，背景完全覆盖 */
+.water-section {
+    grid-area: water-section;
+    width: 100%;
+    /* 蓝色水域渐变背景，作为拉力条和血量圈的底层背景 */
+    background: linear-gradient(180deg, #4fc3f7, #2196f3);
+    border-radius: 12px;
+    position: relative;
+    overflow: hidden;
+    /* 核心：自适应内部元素高度，同时保留足够内边距 */
+    padding: 30px 20px; 
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-around;
+    /* 保证水域区域最小高度，避免内容过窄 */
+    min-height: 400px;
+}
+
+.pull-bar-section {
+  width: 100%; /* 占满整个水域区域的宽度 */
+}
+
+/* 水波动画 - 调整位置，不遮挡内容 */
+.water-wave {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 200%;
+    height: 30px; /* 缩小水波高度 */
+    background: rgba(255, 255, 255, 0.2);
+    border-radius: 40%;
+    animation: wave 8s linear infinite;
+    /* 水波层级低于内容 */
+    z-index: 1;
+}
+
+.water-wave:nth-child(2) {
+    animation-delay: -4s;
+    opacity: 0.8;
+    height: 20px;
+    bottom: 8px;
+}
+
+@keyframes wave {
+    0% { transform: translateX(0) rotate(0deg); }
+    50% { transform: translateX(-50%) rotate(10deg); }
+    100% { transform: translateX(0) rotate(0deg); }
+}
+
+/* 拉力条区域 - 核心修改：移除灰色背景，融入蓝色水域，仅保留内容层 */
+.top-bar {
+    position: relative;
+    width: 100%;
+    height: 60px; /* 保持原有高度 */
+    /* 核心：移除灰色背景，让蓝色水域作为背景 */
+    background: transparent;
+    border-radius: 8px;
+    overflow: hidden;
+    margin-bottom: 30px; /* 增加与血量圈的间距 */
+    z-index: 2; /* 确保在水背景和水波上方 */
+    /* 可选：添加轻微边框，增强拉力条轮廓 */
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    /* 新增：让子元素居中 */
+    display: flex;
+    align-items: center;
+    padding: 0 10px; /* 左右内边距，避免贴边 */
+}
+
+/* 核心修改：橙色拉力条 - 横向占满父级+上下变短 */
+.orange-fill {
+    position: absolute; /* 绝对定位，铺满.top-bar */
+    top: 50%; /* 垂直居中 */
+    left: 0; /* 从左侧开始 */
+    transform: translateY(-50%); /* 精准垂直居中 */
+    height: 100%; /* 上下变短，可按需调整（比如5px/8px） */
+    width: 0%; /* 初始宽度0%，由JS控制百分比 */
+    background: linear-gradient(to right, #ff6d00, #ffb74d);
+    opacity: 0.9;
+    border-radius: 3px; /* 圆角更美观 */
+    transition: width 0.1s ease; /* 宽度变化更顺滑 */
+    z-index: 1; /* 确保在判定区下方但可见 */
+}
+
+/* 橙色条子弹时间特效 */
+.orange-fill.bullet-time {
+    background: linear-gradient(90deg, #ff8c00, #ffdd00, #ff8c00);
+    box-shadow: 0 0 20px rgba(255, 221, 0, 0.8);
+    animation: pulse 0.5s infinite alternate;
+    opacity: 1;
+}
+
+@keyframes pulse {
+    from { transform: translateY(-50%) scaleX(1); } /* 修正居中 */
+    to { transform: translateY(-50%) scaleX(1.02); }
+}
+
+/* 橙色条满100%警告特效 */
+.orange-fill.full-warning {
+    background: linear-gradient(90deg, #ff8c00, #ff0000, #ff8c00);
+    box-shadow: 0 0 20px rgba(255, 0, 0, 0.8);
+    animation: shake 0.3s infinite alternate;
+    opacity: 1;
+}
+
+@keyframes shake {
+    from { transform: translateY(-50%) translateX(0); } /* 修正居中 */
+    to { transform: translateY(-50%) translateX(3px); }
+}
+
+/* 判定区域 - 适配透明背景 + 调整层级 */
+.target-zone {
+    position: absolute;
+    top: 0;
+    left: 60%;
+    width: 25%;
+    height: 100%;
+    border-left: 3px solid #ffd700; /* 缩小边框 */
+    border-right: 3px solid #ffd700;
+    box-sizing: border-box;
+    /* 增强黄色判定区背景，适配透明拉力条 */
+    background: rgba(255, 215, 0, 0.2);
+    z-index: 0; /* 层级低于橙色条，避免遮挡 */
+    transition: left 0.1s linear, width 0.1s linear;
+}
+
+/* 粒子特效容器 */
+.particle-container {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    pointer-events: none;
+    z-index: 2;
+    overflow: hidden;
+}
+
+/* 粒子样式 */
+.particle {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.8);
+    border-radius: 50%;
+    opacity: 0;
+    z-index: 999;
+}
+
+/* 飞向能量条的粒子动画 */
+@keyframes particle-to-energy {
+    0% {
+        transform: translate(0, 0) scale(0);
+        opacity: 0;
+    }
+    20% {
+        opacity: 1;
+        transform: translate(0, -20px) scale(1);
+    }
+    80% {
+        opacity: 0.8;
+        transform: translate(calc(var(--target-x) * 1px), calc(var(--target-y) * 1px)) scale(0.8);
+    }
+    100% {
+        transform: translate(calc(var(--target-x) * 1px), calc(var(--target-y) * 1px)) scale(0);
+        opacity: 0;
+    }
+}
+
+/* 鱼血量容器 - 核心修改：融入蓝色水域背景，调整样式 */
+.fish-health-container {
+    position: relative;
+    width: 180px; /* 缩小尺寸 */
+    height: 180px;
+    z-index: 2; /* 确保在水背景和水波上方 */
+    /* 可选：添加轻微边框，增强血量圈轮廓 */
+    border: 2px solid rgba(255, 255, 255, 0.3);
+    border-radius: 50%;
+    /* 背景透明，让蓝色水域透出 */
+    background: transparent;
+}
+
+.fish-health-ring {
+    width: 100%;
+    height: 100%;
+    border-radius: 50%;
+    /* 核心：移除灰色背景，改为透明 */
+    background: transparent;
+    position: relative;
+    overflow: hidden;
+}
+
+.fish-health-fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: conic-gradient(#ff4444 0deg, #ff0000 var(--health-deg), transparent var(--health-deg));
+    clip-path: circle(50% at center);
+    transition: --health-deg 0.05s linear;
+    /* 增加透明度，让蓝色背景透出 */
+    opacity: 0.9;
+}
+
+/* 血条遮罩 - 调整背景透明度，让蓝色水域轻微透出 */
+.fish-health-mask {
+    position: absolute;
+    top: 8px; /* 缩小内边距 */
+    left: 8px;
+    right: 8px;
+    bottom: 8px;
+    border-radius: 50%;
+    /* 核心：白色背景改为半透明，透出蓝色水域 */
+    background: rgba(255, 255, 255, 0.85);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 2;
+}
+
+/* 鱼图标 */
+.fish-icon {
+    width: 70px; /* 缩小图标 */
+    height: 70px;
+    background: url("https://img.icons8.com/fluency/96/000000/fish.png") center/contain no-repeat;
+    transition: transform 0.5s ease;
+}
+
+.fish-icon.left {
+    transform: scaleX(-1);
+}
+
+/* 隐藏鱼游动方向文字 */
+.fish-direction-text {
+    display: none;
+}
+
+.fish-health-text {
+    position: absolute;
+    bottom: -20px; /* 调整位置 */
+    left: 50%;
+    transform: translateX(-50%);
+    /* 调整文字颜色，适配蓝色背景 */
+    color: white;
+    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
+    font-weight: bold;
+    font-size: 15px; /* 适配字体 */
+    z-index: 3;
+}
+
+/* 玩家朝向显示区域 - 竖屏优化 */
+.player-direction-section {
+    grid-area: player-direction-section;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    margin-bottom: 10px; /* 减少间距 */
+}
+
+.direction-display {
+    display: flex;
+    align-items: center;
+    gap: 5px; /* 减少间距 */
+    padding: 12px 20px; /* 缩小内边距 */
+    background: white;
+    border-radius: 12px;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+    width: 100%;
+    max-width: 400px; /* 缩小最大宽度 */
+    justify-content: center;
+}
+
+.direction-label {
+    font-size: 18px; /* 适配字体 */
+    font-weight: bold;
+    color: #333;
+}
+
+.player-icon {
+    width: 0px; /* 缩小图标 */
+    height: 0px;
+    background: url("https://img.icons8.com/fluency/96/000000/person-fishing.png") center/contain no-repeat;
+    transition: transform 0.3s ease;
+}
+
+.player-icon.left {
+    transform: scaleX(-1);
+}
+
+.direction-text {
+    font-size: 16px; /* 适配字体 */
+    font-weight: bold;
+    color: #2196f3;
+}
+
+/* 底部操作区域 - 竖屏优化 */
+.bottom-section {
+    grid-area: bottom-section;
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    justify-content: center; /* 垂直居中 */
+}
+
+/* 按钮区域 - 竖屏优化 */
+.button-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 12px; /* 调整间距 */
+    margin-bottom: 15px;
+}
+
+.button-row-1 {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    width: 100%;
+    max-width: 450px; /* 适配手机宽度 */
+}
+
+.button-row-2 {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    max-width: 450px;
+}
+
+.button-row-3 {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    width: 100%;
+    max-width: 450px;
+}
+
+/* 收线按钮 - 竖屏优化（更大更易点击） */
+.reel-button {
+    width: 140px; /* 增大按钮尺寸，方便触摸 */
+    height: 140px;
+    font-size: 22px; /* 增大字体 */
+    font-weight: bold;
+    color: white;
+    background: #2196f3;
+    border: none;
+    border-radius: 50%;
+    cursor: pointer;
+    transition: all 0.2s;
+    user-select: none;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 8px;
+    position: relative;
+    touch-action: none;
+    /* 增加触摸反馈 */
+    -webkit-user-select: none;
+    user-select: none;
+    box-shadow: 0 4px 12px rgba(33, 150, 243, 0.3);
+}
+
+/* 正确方向时的按钮特效 */
+.reel-button.correct-direction {
+    background: linear-gradient(135deg, #4CAF50, #8BC34A);
+    box-shadow: 0 0 25px rgba(76, 175, 80, 0.8);
+    animation: correctPulse 0.6s infinite alternate;
+}
+
+@keyframes correctPulse {
+    from { transform: scale(1); }
+    to { transform: scale(1.05); }
+}
+
+.reel-button:hover, .reel-button:active {
+    background: #1565c0;
+    transform: scale(0.96);
+}
+
+.reel-button.dragging {
+    background: #1565c0;
+}
+
+/* 重置按钮 - 竖屏优化 */
+.reset-button {
+    padding: 14px 35px; /* 调整内边距 */
+    font-size: 18px; /* 适配字体 */
+    font-weight: bold;
+    color: white;
+    background: #f44336;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    user-select: none;
+    width: 100%;
+    max-width: 300px;
+    /* 触摸优化 */
+    box-shadow: 0 3px 10px rgba(244, 67, 54, 0.2);
+}
+
+.reset-button:hover, .reset-button:active {
+    background: #d32f2f;
+    transform: scale(0.96);
+}
+
+/* 技能按钮 - 竖屏优化 */
+.skill-button {
+    padding: 12px 20px; /* 调整内边距 */
+    font-size: 15px; /* 适配字体 */
+    font-weight: bold;
+    color: white;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: background 0.2s, transform 0.1s;
+    user-select: none;
+    flex: 1; /* 自适应宽度 */
+    min-width: 120px; /* 保证最小宽度 */
+    /* 触摸优化 */
+    box-shadow: 0 3px 8px rgba(0,0,0,0.1);
+}
+
+.skill1-button {
+    background: #4caf50;
+}
+
+.skill1-button:hover, .skill1-button:active {
+    background: #388e3c;
+    transform: scale(0.96);
+}
+
+.skill1-button:disabled {
+    background: #9e9e9e;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.skill2-button {
+    background: #9C27B0;
+}
+
+.skill2-button:hover, .skill2-button:active {
+    background: #7B1FA2;
+    transform: scale(0.96);
+}
+
+.skill2-button:disabled {
+    background: #9e9e9e;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+.skill3-button {
+    background: #ff9800;
+}
+
+.skill3-button:hover, .skill3-button:active {
+    background: #f57c00;
+    transform: scale(0.96);
+}
+
+.skill3-button:disabled {
+    background: #9e9e9e;
+    cursor: not-allowed;
+    transform: none;
+    box-shadow: none;
+}
+
+/* 状态文本 - 竖屏优化 */
+.status {
+    font-size: 15px; /* 适配字体 */
+    color: #666;
+    text-align: center;
+    margin-bottom: 20px;
+    padding: 8px; /* 缩小内边距 */
+    border-radius: 8px;
+    transition: all 0.2s;
+    line-height: 1.4; /* 增加行高，方便阅读 */
+}
+
+/* 方向正确/错误的状态样式 */
+.status.correct {
+    background: rgba(76, 175, 80, 0.2);
+    color: #2E7D32;
+    font-weight: bold;
+}
+
+.status.wrong {
+    background: rgba(244, 67, 54, 0.2);
+    color: #C62828;
+    font-weight: bold;
+}
+
+/* 子弹时间提示 - 竖屏优化 */
+.bullet-time-notice {
+    position: fixed;
+    top: 20px;
+    left: 50%;
+    transform: translateX(-50%);
+    background: rgba(255, 221, 0, 0.9);
+    color: #333;
+    padding: 8px 25px; /* 调整内边距 */
+    border-radius: 50px;
+    font-size: 18px; /* 适配字体 */
+    font-weight: bold;
+    z-index: 100;
+    opacity: 0;
+    transition: opacity 0.3s;
+    pointer-events: none;
+    box-shadow: 0 4px 15px rgba(255, 221, 0, 0.8);
+    /* 适配刘海屏 */
+    top: calc(20px + env(safe-area-inset-top));
+}
+
+.bullet-time-notice.show {
+    opacity: 1;
+    animation: bounce 0.5s ease-in-out;
+}
+
+@keyframes bounce {
+    0% { transform: translateX(-50%) scale(0.8); }
+    50% { transform: translateX(-50%) scale(1.1); }
+    100% { transform: translateX(-50%) scale(1); }
+}
+
+/* 游戏结束提示 */
+.game-over-screen {
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: rgba(0,0,0,0.8);
+    color: white;
+    padding: 30px 40px;
+    border-radius: 12px;
+    font-size: 20px;
+    font-weight: bold;
+    z-index: 999;
+    display: none;
+    text-align: center;
+}
+
+.game-over-text {
+    margin-bottom: 20px;
+}
+
+/* 自定义属性兼容 */
+:root {
+    --health-deg: 360deg;
+}
+
+/* 手机竖屏专属适配（覆盖所有尺寸） */
+@media (max-width: 768px) {
+    body {
+        padding: 8px;
+    }
+
+    .main-wrapper {
+        gap: 10px;
+    }
+
+    /* 进一步缩小顶部区域 */
+    .top-section {
+        gap: 8px;
+        padding: 5px;
+    }
+    
+    .player-stamina-horizontal, .green-bar-horizontal {
+        height: 40px;
+    }
+
+    /* 水容器内元素适配 */
+    .water-section {
+        min-height: 350px;
+        padding: 20px 15px;
+    }
+    
+    .top-bar {
+        height: 100px;
+        margin-bottom: 20px;
+    }
+
+    .fish-health-container {
+        width: 150px;
+        height: 150px;
+    }
+
+    /* 按钮行强制换行，适配窄屏 */
+    .button-row-1 {
+        flex-wrap: wrap;
+        gap: 15px;
+        justify-content: center;
+    }
+    
+    .button-row-1 > * {
+        flex: 0 0 auto;
+    }
+    
+    /* 收线按钮居中，技能按钮换行 */
+    .button-row-1 .skill-button {
+        width: 45%;
+        min-width: 100px;
+    }
+    
+    .reel-button {
+        order: -1; /* 收线按钮置顶 */
+        margin-bottom: 10px;
+    }
+    
+    .button-row-2, .button-row-3 {
+        flex-wrap: wrap;
+        gap: 10px;
+    }
+    
+    /* 技能按钮全屏宽 */
+    .skill-button, .reset-button {
+        width: 100%;
+        max-width: 100%;
+        padding: 12px 0;
+    }
+    
+    /* 玩家朝向显示区域堆叠 */
+    .direction-display {
+        flex-direction: column;
+        gap: 8px;
+        text-align: center;
+        padding: 10px;
+    }
+
+    .fish-icon {
+        width: 60px;
+        height: 60px;
+    }
+
+    /* 状态文本更小 */
+    .status {
+        font-size: 14px;
+        padding: 6px;
+    }
+
+    /* 子弹时间提示更小 */
+    .bullet-time-notice {
+        font-size: 16px;
+        padding: 6px 20px;
+    }
+}
+
+/* 极小屏幕适配（如iPhone SE） */
+@media (max-width: 375px) {
+    .reel-button {
+        width: 120px;
+        height: 120px;
+        font-size: 20px;
+    }
+
+    .fish-health-container {
+        width: 130px;
+        height: 130px;
+    }
+
+    .fish-icon {
+        width: 50px;
+        height: 50px;
+    }
+
+    .top-bar {
+        height: 90px;
+    }
+
+    .water-section {
+        min-height: 300px;
+    }
+}
