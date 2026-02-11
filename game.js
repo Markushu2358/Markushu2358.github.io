@@ -584,9 +584,9 @@ function updateSkillButtons() {
     reelButton.disabled = gameOver;
     
     // 更新技能按钮文本
-    skill1Button.textContent = `技能1 (消耗${currentConfig.skill1Cost}能量)`;
-    skill2Button.textContent = `技能2 (恢复${currentConfig.skill2Heal}耐力，消耗${currentConfig.skill2Cost}能量)`;
-    skill3Button.textContent = `技能3 (消耗${currentConfig.skill3Cost}能量)`;
+    skill1Button.textContent = `技能1 (${currentConfig.skill1Cost/100}能量)`;
+    skill2Button.textContent = `技能2 (恢复${currentConfig.skill2Heal}耐力，${currentConfig.skill2Cost/100}能量)`;
+    skill3Button.textContent = `技能3 (${currentConfig.skill3Cost/100}能量)`;
 }
 
 // 更新鱼血量UI
