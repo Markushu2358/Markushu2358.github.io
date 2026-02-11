@@ -302,6 +302,9 @@ body {
     height: 4px;
     background: #00bfa5;
     border-radius: 50%;
+    border-style:solid;
+    border-width:1px;
+    border-color: white;
     opacity: 0;
     z-index: 9999;
 }
