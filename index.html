@@ -9,7 +9,7 @@
     <meta name="msapplication-tap-highlight" content="no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>钓鱼demo</title>
+    <title>钓鱼收线动画（竖屏版）</title>
     <link rel="stylesheet" href="game.css">
 </head>
 <body>
@@ -25,10 +25,6 @@
     <div class="main-wrapper">
         <!-- 顶部区域 - 横向耐力和能量条 -->
         <div class="top-section">
-            <div class="fish-select-group">
-                <button class="fish-select-button normal-fish-btn active" id="normalFishBtn">普通鱼</button>
-                <button class="fish-select-button boss-fish-btn" id="bossFishBtn">BOSS鱼</button>
-            </div>
             <div class="player-stamina-horizontal">
                 <div class="player-stamina-fill-horizontal" id="playerStaminaFill"></div>
                 <div class="player-stamina-text-horizontal" id="playerStaminaText">耐力：2000/2000</div>
@@ -57,7 +53,6 @@
                 <div class="top-bar">
                     <div class="orange-fill" id="orangeFill"></div>
                     <div class="target-zone" id="targetZone"></div>
-                    <div class="particle-container" id="particleContainer"></div>
                 </div>
             </div>
             <div class="fish-health-section">
@@ -72,6 +67,8 @@
                     <div class="fish-health-text" id="fishHealthText">3000/3000</div>
                 </div>
             </div>
+            <!-- 状态文本移到水域下方、玩家朝向上方 -->
+            <div class="status" id="status">按住并拖动收线按钮（往鱼反方向）| 黄色判定区：60%（含）-85%（不含） | 总能量：0/300</div>
         </div>
 
         <!-- 玩家朝向区域 -->
@@ -101,10 +98,17 @@
                 <div class="button-row-3">
                     <button class="reset-button" id="resetButton">重置</button>
                 </div>
+                <!-- 鱼类型选择移到重置按钮下方 -->
+                <div class="fish-select-group">
+                    <button class="fish-select-button normal-fish-btn active" id="normalFishBtn">普通鱼</button>
+                    <button class="fish-select-button boss-fish-btn" id="bossFishBtn">BOSS鱼</button>
+                </div>
             </div>
-            <div class="status" id="status">按住并拖动收线按钮（往鱼反方向）| 黄色判定区：60%（含）-85%（不含） | 总能量：0/300</div>
         </div>
     </div>
+
+    <!-- 粒子容器移到body下，层级最高 -->
+    <div class="particle-container" id="particleContainer"></div>
 
     <script src="game.js"></script>
 </body>
