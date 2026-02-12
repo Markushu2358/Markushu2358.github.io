@@ -290,7 +290,17 @@ body {
     box-sizing: border-box;
     background: rgba(255, 215, 0, 0.2);
     z-index: 3;
-    transition: left 0.1s linear, width 0.1s linear;
+    /* 新增：添加平滑过渡，确保判定区缩放丝滑 */
+    transition: left 0.8s ease, width 0.8s ease, border 0.3s ease;
+}
+
+/* 子弹时间内判定区样式（全宽金色） */
+.target-zone.bullet-time-full {
+    left: 0% !important;
+    width: 100% !important;
+    background: rgba(255, 215, 0, 0.3) !important;
+    border: none !important;
+    box-shadow: 0 0 15px rgba(255, 215, 0, 0.5) !important;
 }
 
 /* 粒子容器：全屏布局，最高层级，允许溢出 */

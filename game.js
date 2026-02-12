@@ -126,6 +126,10 @@ let dragDirection = 0;
 let playerDirection = 1; // 1=右，-1=左
 let currentFishType = 'normal'; // normal/boss
 let splashTimer = null; // 水花特效定时器
+let bulletTimeBeforeTarget = { // 记录子弹时间前的判定区位置/宽度
+    left: 60,
+    width: 25
+};
 
 // ===================== 基础常量（统一定义） =====================
 const BASE_TARGET_START = 60;
@@ -489,23 +493,48 @@ function checkBossPhase2() {
 function startBulletTime() {
     if (isBulletTime) return;
     isBulletTime = true;
+    
+    // 1. 记录子弹时间前的判定区状态（用于结束后恢复）
+    bulletTimeBeforeTarget.left = targetZoneLeft;
+    bulletTimeBeforeTarget.width = targetZoneWidth;
+    
+    // 2. 判定区占满整个拉力条
+    targetZone.classList.add('bullet-time-full');
+    // 强制更新判定区样式（兼容BOSS模式）
+    targetZone.style.left = '0%';
+    targetZone.style.width = '100%';
+    
+    // 3. 拉力条样式 + 提示
     orangeFill.classList.add('bullet-time');
-    bulletTimeNotice.textContent = `子弹时间！${currentConfig.bulletTimeDur/1000}秒内橙色条减速，鱼持续掉血`;
+    bulletTimeNotice.textContent = `子弹时间！${currentConfig.bulletTimeDur/1000}秒内判定区全满，鱼1.5倍掉血！`;
     bulletTimeNotice.classList.add('show');
-    const targetStart = isBossMode ? targetZoneLeft : BASE_TARGET_START;
-    const targetEnd = isBossMode ? (targetZoneLeft + targetZoneWidth) : BASE_TARGET_END;
-    status.textContent = `${isBossMode ? (isBossPhase2 ? '[BOSS模式-第二阶段] ' : '[BOSS模式] ') : ''}[子弹时间！] 橙色条减速，鱼持续掉血 | 黄色区: ${Math.round(targetStart)}%-${Math.round(targetEnd)}% | 总能量: ${Math.round(totalGreenEnergy)}/${currentConfig.maxEnergy}`;
-    status.style.color = '#ffdd00';
+    
+    // 4. 状态文本提示
+    const statusText = `${isBossMode ? (isBossPhase2 ? '[BOSS模式-第二阶段] ' : '[BOSS模式] ') : ''}[子弹时间🔥] 判定区全满！鱼1.5倍持续掉血 | 总能量: ${Math.round(totalGreenEnergy)}/${currentConfig.maxEnergy}`;
+    status.textContent = statusText;
+    status.style.color = '#ffd700';
+    
+    // 5. 子弹时间定时器
     clearTimeout(bulletTimeTimer);
     bulletTimeTimer = setTimeout(() => {
         endBulletTime();
     }, currentConfig.bulletTimeDur);
 }
-
 function endBulletTime() {
     isBulletTime = false;
+    
+    // 1. 移除判定区全宽样式，恢复原有位置/宽度
+    targetZone.classList.remove('bullet-time-full');
+    targetZoneLeft = bulletTimeBeforeTarget.left;
+    targetZoneWidth = bulletTimeBeforeTarget.width;
+    targetZone.style.left = `${targetZoneLeft}%`;
+    targetZone.style.width = `${targetZoneWidth}%`;
+    
+    // 2. 恢复拉力条样式 + 隐藏提示
     orangeFill.classList.remove('bullet-time');
     bulletTimeNotice.classList.remove('show');
+    
+    // 3. 恢复状态文本颜色
     const inTargetZone = isInTargetZone();
     status.style.color = inTargetZone ? '#ffffff' : '#f44336';
 }
@@ -751,7 +780,7 @@ function updateUI() {
 function loop() {
     if (gameOver) return;
     
-    // 1. 处理橙色条增减
+    // 1. 橙色条增减逻辑（保留不变）
     if (isHolding) {
         const randomInc = getRandomOrangeValue();
         orangeProgress += randomInc;
@@ -767,32 +796,32 @@ function loop() {
         orangeProgress -= randomDec;
     }
 
-    // 2. 鱼掉血逻辑【核心修改】：优先处理能量满的情况
+    // 2. 鱼掉血逻辑【核心修改：子弹时间内无条件1.5倍掉血】
     const inTargetZone = isInTargetZone();
-    // 能量满时：掉血 = 金色区域速度 × 1.5 × 子弹时间倍率
-    if (isEnergyFull()) {
-        const bloodLoss = currentConfig.fishFast * 1.5 * (isBulletTime ? 1.5 : 1);
+    // 优先级1：子弹时间内 → 无条件1.5倍掉血
+    if (isBulletTime) {
+        const bloodLoss = currentConfig.fishFast * 1.5; // 1.5倍金色区域掉血速度
         fishHealth -= bloodLoss;
+        console.log('子弹时间掉血：' + bloodLoss + '，当前鱼血量：' + fishHealth); // 调试用
     } 
-    // 能量未满时：保留原有逻辑
+    // 优先级2：非子弹时间 → 原有逻辑
     else if (inTargetZone) {
-        // 在判定区，鱼持续掉血（fast速度）
-        fishHealth -= currentConfig.fishFast * (isBulletTime ? 1.5 : 1);
+        fishHealth -= currentConfig.fishFast;
     } else if (isHolding && !inTargetZone) {
-        // 不在判定区但收线，鱼少量掉血（slow速度）
         fishHealth -= currentConfig.fishSlow;
     }
 
-    // 3. 玩家耐力消耗逻辑（保持不变）
+    // 3. 玩家耐力消耗（保留不变）
     if (isHolding && !inTargetZone) {
         const damageMultiplier = orangeProgress >= 100 ? currentConfig.fullHpMultiplier : 1;
         const directionPenalty = (dragDirection !== 0 && !isDragDirectionCorrect()) ? 1.5 : 1;
         playerStamina -= PLAYER_DAMAGE * damageMultiplier * directionPenalty;
     }
 
-    // 4. 更新UI和特效
+    // 4. 更新UI
     updateUI();
 }
+
 // ===================== 鱼模式切换（整合逻辑，避免冲突） =====================
 function switchFishMode(isBoss) {
     isBossMode = isBoss;
