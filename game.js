@@ -51,7 +51,7 @@ const DEFAULT_CONFIG = {
     orangeMax: 8,
     orangeSlowMin: 1,
     orangeSlowMax: 4,
-    bulletTimeDec: 1,
+    bulletTimeDec: 0.3,
     greenSlow: 0.03,       // 降低能量增长，减少粒子数量
     greenFast: 1.5,
     barCapacity: 100,
