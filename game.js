@@ -50,8 +50,8 @@ const DEFAULT_CONFIG = {
     orangeMin: 2,          // 降低橙色条增长速度，适配移动端操作
     orangeMax: 8,
     orangeSlowMin: 1,
-    orangeSlowMax: 4,
-    bulletTimeDec: 1,
+    orangeSlowMax: 1,
+    bulletTimeDec: 2,
     greenSlow: 0.03,       // 降低能量增长，减少粒子数量
     greenFast: 1.5,
     barCapacity: 100,
