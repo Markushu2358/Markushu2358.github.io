@@ -2,38 +2,41 @@
 <html lang="zh-CN">
 <head>
     <meta charset="UTF-8">
-    <!-- 终极移动端视口设置：强制竖屏、适配刘海屏、禁止缩放 -->
+    <!-- 移动端核心适配：竖屏、禁止缩放、刘海屏适配 -->
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
     <meta name="screen-orientation" content="portrait">
     <meta name="x5-screen-orientation" content="portrait">
     <meta name="msapplication-tap-highlight" content="no">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>demo</title>
+    <title>钓鱼小游戏</title>
     <link rel="stylesheet" href="game.css">
 </head>
 <body>
-    <!-- 子弹时间提示 -->
+    <!-- 子弹时间提示（全局浮层） -->
     <div class="bullet-time-notice" id="bulletTimeNotice">子弹时间！1秒内橙色条减速，鱼持续掉血</div>
 
-    <!-- 游戏结束弹窗（补充缺失的DOM） -->
+    <!-- 游戏结束弹窗 -->
     <div class="game-over-screen" id="gameOverScreen">
         <div class="game-over-text" id="gameOverText"></div>
         <button class="reset-button" id="gameOverResetBtn">重新开始</button>
     </div>
 
+    <!-- 主容器：适配所有屏幕尺寸 -->
     <div class="main-wrapper">
-        <!-- 顶部区域 - 横向耐力和能量条 -->
+        <!-- 顶部区域：耐力条 + 能量条 -->
         <div class="top-section">
+            <!-- 玩家耐力条 -->
             <div class="player-stamina-horizontal">
                 <div class="player-stamina-fill-horizontal" id="playerStaminaFill"></div>
                 <div class="player-stamina-text-horizontal" id="playerStaminaText">耐力：2000/2000</div>
             </div>
+            
+            <!-- 能量条（3格） -->
             <div class="green-bars-horizontal">
                 <div class="green-bar-horizontal">
                     <div class="green-fill-horizontal" id="greenFill1"></div>
                     <div class="green-effect-horizontal" id="greenEffect1"></div>
-                    <!-- 补充能量条文字节点 -->
                     <div class="green-bar-text" id="greenBarText1">0/100</div>
                 </div>
                 <div class="green-bar-horizontal">
@@ -49,19 +52,22 @@
             </div>
         </div>
 
-        <!-- 水域区域 -->
+        <!-- 水域区域：核心游戏视觉区 -->
         <div class="water-section">
             <div class="water-wave"></div>
             <div class="water-wave"></div>
+            
+            <!-- 拉力条区域 -->
             <div class="pull-bar-section">
                 <div class="top-bar">
                     <div class="orange-fill" id="orangeFill"></div>
                     <div class="target-zone" id="targetZone"></div>
                 </div>
             </div>
+            
+            <!-- 鱼血量显示 -->
             <div class="fish-health-section">
                 <div class="fish-health-container">
-                    <div class="fish-direction-text" id="fishDirectionText">鱼游动方向：右</div>
                     <div class="fish-health-ring">
                         <div class="fish-health-fill" id="fishHealthFill"></div>
                     </div>
@@ -71,11 +77,12 @@
                     <div class="fish-health-text" id="fishHealthText">3000/3000</div>
                 </div>
             </div>
-            <!-- 状态文本（放大字号适配） -->
+            
+            <!-- 游戏状态提示 -->
             <div class="status" id="status">按住并拖动收线按钮（往鱼反方向）| 黄色判定区：60%（含）-85%（不含） | 总能量：0/300</div>
         </div>
 
-        <!-- 玩家朝向区域：移除icon，合并标签和文字 -->
+        <!-- 玩家朝向提示 -->
         <div class="player-direction-section">
             <div class="direction-display">
                 <div class="direction-label">玩家朝向：</div>
@@ -83,10 +90,10 @@
             </div>
         </div>
 
-        <!-- 底部操作区域（重构按钮布局：技能1/3在收线左右，技能2在下方） -->
+        <!-- 底部操作区：按钮集合 -->
         <div class="bottom-section">
             <div class="button-container">
-                <!-- 收线+技能1/3 横向布局 -->
+                <!-- 收线 + 技能1/3 横向布局 -->
                 <div class="reel-skill-row">
                     <button class="skill-button skill1-button" id="skill1Button" disabled>技能1 (1能量)</button>
                     <button class="reel-button" id="reelButton">
@@ -97,7 +104,7 @@
                     <button class="skill-button skill3-button" id="skill3Button" disabled>技能3 (3能量)</button>
                 </div>
                 
-                <!-- 技能2单独一行：更高、略宽于收线按钮 -->
+                <!-- 技能2单独一行 -->
                 <div class="skill2-row">
                     <button class="skill-button skill2-button" id="skill2Button" disabled>技能2 (恢复200耐力，1能量)</button>
                 </div>
@@ -107,7 +114,7 @@
                     <button class="reset-button" id="resetButton">重置</button>
                 </div>
                 
-                <!-- 鱼类型选择移到重置按钮下方 -->
+                <!-- 鱼类型选择 -->
                 <div class="fish-select-group">
                     <button class="fish-select-button normal-fish-btn active" id="normalFishBtn">普通鱼</button>
                     <button class="fish-select-button boss-fish-btn" id="bossFishBtn">BOSS鱼</button>
@@ -116,9 +123,8 @@
         </div>
     </div>
 
-    <!-- 粒子容器（fixed全屏，最高层级） -->
+    <!-- 特效容器（全局浮层，最高层级） -->
     <div class="particle-container" id="particleContainer"></div>
-    <!-- 鱼水花特效容器 -->
     <div class="fish-splash-container" id="fishSplashContainer"></div>
 
     <script src="game.js"></script>

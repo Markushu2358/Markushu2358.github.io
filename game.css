@@ -1,3 +1,4 @@
+/* ===================== 基础重置与全局样式 ===================== */
 * {
     margin: 0;
     padding: 0;
@@ -5,7 +6,6 @@
     -webkit-tap-highlight-color: transparent;
 }
 
-/* 核心：body填满屏幕，无滚动，适配刘海屏 */
 body {
     font-family: Arial, sans-serif;
     background: #f5f5f5;
@@ -15,7 +15,6 @@ body {
     width: 100vw;          
     height: 100vh;         
     overflow: hidden;      
-    padding: 0;            
     /* 适配刘海屏/底部导航栏 */
     padding-top: env(safe-area-inset-top);
     padding-bottom: env(safe-area-inset-bottom);
@@ -23,7 +22,7 @@ body {
     padding-right: env(safe-area-inset-right);
 }
 
-/* 核心：主容器填满屏幕，用flex替代grid实现高度自适应 */
+/* 主容器：适配所有屏幕，最大宽度500px */
 .main-wrapper {
     width: 100%;
     height: 100%;          
@@ -34,7 +33,7 @@ body {
     padding: 8px;          
 }
 
-/* 顶部区域：自适应高度，不占过多空间 */
+/* ===================== 顶部区域：耐力条 + 能量条 ===================== */
 .top-section {
     display: flex;
     flex-direction: column;
@@ -44,6 +43,7 @@ body {
     flex-shrink: 0;        
 }
 
+/* 鱼类型选择按钮 */
 .fish-select-group {
     display: flex;
     gap: 8px;
@@ -70,7 +70,7 @@ body {
 .boss-fish-btn { background: #d81b60; }
 .boss-fish-btn.active { background: #b0003a; box-shadow: 0 0 0 2px rgba(216, 27, 96, 0.3); }
 
-/* 耐力条/能量条：降低高度，适配屏幕 + 恢复能量进度文字 */
+/* 玩家耐力条 */
 .player-stamina-horizontal {
     width: 100%;
     height: 38px;
@@ -102,6 +102,7 @@ body {
     z-index: 1;
 }
 
+/* 能量条容器 */
 .green-bars-horizontal {
     display: flex;
     gap: 6px;
@@ -117,7 +118,7 @@ body {
     position: relative;
 }
 
-/* 新增：能量条进度文字 */
+/* 能量条进度文字 */
 .green-bar-text {
     position: absolute;
     top: 50%;
@@ -140,6 +141,7 @@ body {
     transition: width 0.05s linear;
 }
 
+/* 能量条满格样式 */
 .green-fill-horizontal.full {
     background: linear-gradient(90deg, #00ff9d, #00bfa5);
     box-shadow: 0 0 12px rgba(0, 255, 157, 0.7);
@@ -151,6 +153,7 @@ body {
     to { box-shadow: 0 0 20px rgba(0, 255, 157, 1); }
 }
 
+/* 能量条流动特效 */
 .green-effect-horizontal {
     position: absolute;
     top: 0;
@@ -172,7 +175,7 @@ body {
     100% { transform: translateX(100%); }
 }
 
-/* 水域区域：核心自适应高度，占满剩余空间 */
+/* ===================== 水域区域：核心视觉区 ===================== */
 .water-section {
     width: 100%;
     background: linear-gradient(180deg, #4fc3f7, #2196f3);
@@ -185,22 +188,15 @@ body {
     justify-content: center;
     flex-grow: 1;          
     min-height: 280px;     
-    transition: background 0.5s ease; /* 新增：背景色过渡动画，更丝滑 */
+    transition: background 0.5s ease;
 }
 
-/* ========== 关键修改：BOSS第二阶段水域背景色 ========== */
+/* BOSS第二阶段水域背景 */
 .water-section.boss-phase2 {
-    /* 深蓝+紫渐变，凸显激烈战斗氛围，可根据喜好替换下方渐变 */
     background: linear-gradient(180deg, #1a237e, #b64b97);
-    /* 备选：红+紫渐变（更激烈）
-    background: linear-gradient(180deg, #b71c1c, #880e4f);
-    */
-    /* 备选：纯深蓝渐变
-    background: linear-gradient(180deg, #0d47a1, #1565c0);
-    */
 }
 
-/* 水波动画：缩小尺寸，适配小屏 */
+/* 水波动画 */
 .water-wave {
     position: absolute;
     bottom: 0;
@@ -226,7 +222,7 @@ body {
     100% { transform: translateX(0) rotate(0deg); }
 }
 
-/* 拉力条：降低高度，适配屏幕 */
+/* 拉力条 */
 .top-bar {
     position: relative;
     width: 100%;
@@ -242,6 +238,7 @@ body {
     padding: 0 8px;
 }
 
+/* 橙色拉力条 */
 .orange-fill {
     position: absolute;
     top: 50%;
@@ -256,6 +253,7 @@ body {
     z-index: 1;
 }
 
+/* 子弹时间拉力条样式 */
 .orange-fill.bullet-time {
     background: linear-gradient(90deg, #ff8c00, #ffdd00, #ff8c00);
     box-shadow: 0 0 15px rgba(255, 221, 0, 0.8);
@@ -267,6 +265,7 @@ body {
     to { transform: translateY(-50%) scaleX(1.02); }
 }
 
+/* 拉力条满警告样式 */
 .orange-fill.full-warning {
     background: linear-gradient(90deg, #ff8c00, #ff0000, #ff8c00);
     box-shadow: 0 0 15px rgba(255, 0, 0, 0.8);
@@ -278,7 +277,7 @@ body {
     to { transform: translateY(-50%) translateX(3px); }
 }
 
-/* 黄色判定区：提升层级，确保不被橙色条覆盖 */
+/* 黄色判定区 */
 .target-zone {
     position: absolute;
     top: 0;
@@ -290,11 +289,11 @@ body {
     box-sizing: border-box;
     background: rgba(255, 215, 0, 0.2);
     z-index: 3;
-    /* 新增：添加平滑过渡，确保判定区缩放丝滑 */
+    /* 判定区平滑过渡 */
     transition: left 0.8s ease, width 0.8s ease, border 0.3s ease;
 }
 
-/* 子弹时间内判定区样式（全宽金色） */
+/* 子弹时间判定区（全宽金色） */
 .target-zone.bullet-time-full {
     left: 0% !important;
     width: 100% !important;
@@ -303,39 +302,7 @@ body {
     box-shadow: 0 0 15px rgba(255, 215, 0, 0.5) !important;
 }
 
-/* 粒子容器：全屏布局，最高层级，允许溢出 */
-.particle-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 100vw;    
-    height: 100vh;   
-    pointer-events: none;
-    z-index: 9999;   
-    overflow: visible;
-}
-
-.particle {
-    position: absolute;
-    width: 4px;
-    height: 4px;
-    background: #00bfa5;
-    border-radius: 50%;
-    border-style:solid;
-    border-width:2px;
-    border-color: white;
-    opacity: 0;
-    z-index: 9999;
-}
-
-@keyframes particle-to-energy {
-    0% { transform: translate(0, 0) scale(0); opacity: 0; }
-    20% { opacity: 1; transform: translate(0, -15px) scale(1); }
-    80% { opacity: 0.8; transform: translate(calc(var(--target-x) * 1px), calc(var(--target-y) * 1px)) scale(0.8); }
-    100% { transform: translate(calc(var(--target-x) * 1px), calc(var(--target-y) * 1px)) scale(0); opacity: 0; }
-}
-
-/* 鱼血量容器：缩小尺寸，适配小屏 */
+/* ===================== 鱼血量样式 ===================== */
 .fish-health-container {
     position: relative;
     width: 140px;
@@ -386,11 +353,10 @@ body {
     height: 60px;
     background: url("https://img.icons8.com/fluency/96/000000/fish.png") center/contain no-repeat;
     transition: transform 0.5s ease;
-    position: relative; /* 为水花特效定位做准备 */
+    position: relative;
 }
 
 .fish-icon.left { transform: scaleX(-1); }
-.fish-direction-text { display: none; }
 
 .fish-health-text {
     position: absolute;
@@ -404,7 +370,7 @@ body {
     z-index: 3;
 }
 
-/* 玩家朝向区域：移除icon后优化样式，标签和文字同行居中 */
+/* ===================== 玩家朝向样式 ===================== */
 .player-direction-section {
     width: 100%;
     display: flex;
@@ -417,7 +383,7 @@ body {
 .direction-display {
     display: flex;
     align-items: center;
-    gap: 8px; /* 增加间距更美观 */
+    gap: 8px;
     padding: 8px 15px;
     background: white;
     border-radius: 8px;
@@ -432,12 +398,12 @@ body {
     color: #333; 
 }
 .direction-text { 
-    font-size: 16px; /* 放大文字，和标签一致 */
+    font-size: 16px;
     font-weight: bold; 
     color: #2196f3; 
 }
 
-/* 底部区域：自适应高度，不溢出 */
+/* ===================== 底部按钮区域 ===================== */
 .bottom-section {
     width: 100%;
     display: flex;
@@ -445,7 +411,6 @@ body {
     flex-shrink: 0;        
 }
 
-/* 重构按钮布局：核心修改部分 */
 .button-container {
     display: flex;
     flex-direction: column;
@@ -455,20 +420,20 @@ body {
     width: 100%;
 }
 
-/* 收线+技能1/3 横向布局：核心样式 */
+/* 收线+技能1/3 横向布局 */
 .reel-skill-row {
     display: flex;
     align-items: center;
     justify-content: space-between;
     width: 100%;
-    gap: 8px; /* 按钮间间距 */
+    gap: 8px;
 }
 
-/* 技能1/3样式：高度和收线按钮一致，宽度平分剩余空间 */
+/* 技能1/3按钮样式 */
 .reel-skill-row .skill1-button,
 .reel-skill-row .skill3-button {
-    flex: 1; /* 平分剩余宽度，占满屏幕 */
-    height: 120px; /* 和收线按钮高度一致 */
+    flex: 1;
+    height: 120px;
     padding: 0;
     font-size: 14px;
     border-radius: 8px;
@@ -476,11 +441,11 @@ body {
     align-items: center;
     justify-content: center;
     text-align: center;
-    white-space: normal; /* 允许换行 */
+    white-space: normal;
     line-height: 1.2;
 }
 
-/* 收线按钮：保持原有尺寸，居中 */
+/* 收线按钮 */
 .reel-button {
     width: 120px;
     height: 120px;
@@ -500,9 +465,10 @@ body {
     position: relative;
     touch-action: none;
     box-shadow: 0 3px 10px rgba(33, 150, 243, 0.3);
-    flex-shrink: 0; /* 防止收线按钮被压缩 */
+    flex-shrink: 0;
 }
 
+/* 收线按钮正确方向样式 */
 .reel-button.correct-direction {
     background: linear-gradient(135deg, #4CAF50, #8BC34A);
     box-shadow: 0 0 20px rgba(76, 175, 80, 0.8);
@@ -521,7 +487,7 @@ body {
 
 .reel-button.dragging { background: #1565c0; }
 
-/* 技能2行样式：宽度比收线略宽，高度更高 */
+/* 技能2按钮行 */
 .skill2-row {
     width: 100%;
     display: flex;
@@ -529,8 +495,8 @@ body {
 }
 
 .skill2-row .skill2-button {
-    width: calc(120px + 40px); /* 比收线按钮宽40px */
-    height: 80px; /* 更高的高度 */
+    width: calc(120px + 40px);
+    height: 80px;
     padding: 0 15px;
     font-size: 14px;
     border-radius: 8px;
@@ -549,7 +515,7 @@ body {
     width: 100%;
 }
 
-/* 按钮通用样式调整 */
+/* 重置按钮 */
 .reset-button {
     padding: 12px 0;
     font-size: 16px;
@@ -570,7 +536,7 @@ body {
     transform: scale(0.96);
 }
 
-/* 技能按钮基础样式（覆盖原有样式） */
+/* 技能按钮基础样式 */
 .skill-button {
     color: white;
     border: none;
@@ -593,26 +559,27 @@ body {
 .skill3-button:hover, .skill3-button:active { background: #f57c00; transform: scale(0.96); }
 .skill3-button:disabled { background: #9e9e9e; cursor: not-allowed; transform: none; box-shadow: none; }
 
-/* 状态文本：放大字号，适配不同屏幕 */
+/* ===================== 状态文本与弹窗 ===================== */
+/* 游戏状态文本 */
 .status {
-    font-size: 15px; /* 原12px → 15px */
+    font-size: 15px;
     color: #666;
     text-align: center;
     margin-bottom: 4px;
-    padding: 8px 6px; /* 增加内边距 */
+    padding: 8px 6px;
     border-radius: 6px;
     transition: all 0.2s;
     line-height: 1.4;
     font-weight: 500;
 }
 
-/* 水域中的状态文本样式优化 */
+/* 水域内状态文本 */
 .water-section .status {
     margin-top: 15px;
     width: 100%;
     color: white;
     text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-    font-size: 16px; /* 水域内再放大1px */
+    font-size: 16px;
 }
 
 .status.correct {
@@ -627,7 +594,7 @@ body {
     font-weight: bold;
 }
 
-/* 子弹时间提示：适配刘海屏，缩小尺寸 */
+/* 子弹时间提示 */
 .bullet-time-notice {
     position: fixed;
     top: calc(10px + env(safe-area-inset-top));
@@ -657,7 +624,7 @@ body {
     100% { transform: translateX(-50%) scale(1); }
 }
 
-/* 游戏结束弹窗：适配手机屏幕 */
+/* 游戏结束弹窗 */
 .game-over-screen {
     position: fixed;
     top: 50%;
@@ -681,10 +648,40 @@ body {
     line-height: 1.4;
 }
 
-/* 自定义属性兼容 */
-:root { --health-deg: 360deg; }
+/* ===================== 特效容器 ===================== */
+/* 粒子容器（能量特效） */
+.particle-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;    
+    height: 100vh;   
+    pointer-events: none;
+    z-index: 9999;   
+    overflow: visible;
+}
 
-/* 鱼水花特效容器和粒子样式 */
+.particle {
+    position: absolute;
+    width: 4px;
+    height: 4px;
+    background: #00bfa5;
+    border-radius: 50%;
+    border-style:solid;
+    border-width:2px;
+    border-color: white;
+    opacity: 0;
+    z-index: 9999;
+}
+
+@keyframes particle-to-energy {
+    0% { transform: translate(0, 0) scale(0); opacity: 0; }
+    20% { opacity: 1; transform: translate(0, -15px) scale(1); }
+    80% { opacity: 0.8; transform: translate(calc(var(--target-x) * 1px), calc(var(--target-y) * 1px)) scale(0.8); }
+    100% { transform: translate(calc(var(--target-x) * 1px), calc(var(--target-y) * 1px)) scale(0); opacity: 0; }
+}
+
+/* 鱼水花特效容器 */
 .fish-splash-container {
     position: fixed;
     top: 0;
@@ -692,7 +689,7 @@ body {
     width: 130vw;
     height: 130vh;
     pointer-events: none;
-    z-index: 9998; /* 低于能量粒子，高于游戏内容 */
+    z-index: 9998;
     overflow: visible;
 }
 
@@ -709,6 +706,7 @@ body {
     z-index: 9998;
 }
 
+/* 水花动画 */
 @keyframes fishSplashLeft {
     0% { 
         transform: translate(0, 0) scale(0); 
@@ -739,7 +737,8 @@ body {
     }
 }
 
-/* 移动端专属适配（覆盖所有尺寸） */
+/* ===================== 移动端适配 ===================== */
+/* 平板/手机通用适配 */
 @media (max-width: 768px) {
     .main-wrapper { gap: 6px; padding: 6px; }
     .top-section { gap: 4px; padding: 2px; }
@@ -749,7 +748,7 @@ body {
     .fish-health-container { width: 120px; height: 120px; }
     .fish-icon { width: 50px; height: 50px; }
     
-    /* 按钮适配小屏 */
+    /* 按钮适配 */
     .reel-button { width: 100px; height: 100px; font-size: 18px; }
     .reel-skill-row .skill1-button,
     .reel-skill-row .skill3-button { height: 100px; font-size: 12px; }
@@ -759,12 +758,12 @@ body {
         font-size: 12px; 
     }
     
-    /* 状态文字进一步放大 */
+    /* 状态文字适配 */
     .status { font-size: 14px; }
     .water-section .status { font-size: 15px; }
 }
 
-/* 极小屏幕（如iPhone SE/小安卓机） */
+/* 极小屏幕（iPhone SE/小安卓） */
 @media (max-width: 375px) {
     .reel-button { width: 80px; height: 80px; font-size: 16px; }
     .reel-skill-row .skill1-button,
@@ -779,29 +778,21 @@ body {
     .top-bar { height: 40px; }
     .water-section { min-height: 220px; }
     
-    /* 极小屏状态文字适配 */
+    /* 状态文字适配 */
     .status { font-size: 13px; padding: 6px 4px; }
     .water-section .status { font-size: 14px; }
 }
 
 /* 移动端触摸优化 */
 .skill-button, .reset-button, .fish-select-button {
-    touch-action: manipulation; /* 允许点击、轻扫等操作，禁用缩放 */
+    touch-action: manipulation;
 }
 
+/* 自定义属性兼容 */
+:root { --health-deg: 360deg; }
+
+/* 拉力条区域适配 */
 .pull-bar-section { 
     width: 100%; 
-    /* 负边距抵消边缘间隙，让拉力条完全占满 */
     margin: 0 -8px;
-
-/* 能量满时拉力条金色样式 */
-.orange-fill.energy-full {
-    background: linear-gradient(90deg, #ffd700, #ffc107, #ffd700) !important;
-    box-shadow: 0 0 20px rgba(255, 215, 0, 0.9) !important;
-    animation: goldPulse 0.8s infinite alternate !important;
-}
-
-@keyframes goldPulse {
-    from { transform: translateY(-50%) scaleX(1); }
-    to { transform: translateY(-50%) scaleX(1.03); }
 }
