@@ -1,4 +1,4 @@
-// ===================== 1. 全局DOM元素获取（仅保留核心使用的元素） =====================
+// ===================== 1. 全局DOM元素获取 =====================
 const orangeFill = document.getElementById('orangeFill');
 const particleContainer = document.getElementById('particleContainer');
 const fishSplashContainer = document.getElementById('fishSplashContainer');
@@ -7,19 +7,19 @@ const fishHealthFill = document.getElementById('fishHealthFill');
 const fishHealthText = document.getElementById('fishHealthText');
 const fishIcon = document.getElementById('fishIcon');
 const greenFills = [
-    document.getElementById('greenFill1'),
-    document.getElementById('greenFill2'),
-    document.getElementById('greenFill3')
+  document.getElementById('greenFill1'),
+  document.getElementById('greenFill2'),
+  document.getElementById('greenFill3')
 ];
 const greenBarTexts = [
-    document.getElementById('greenBarText1'),
-    document.getElementById('greenBarText2'),
-    document.getElementById('greenBarText3')
+  document.getElementById('greenBarText1'),
+  document.getElementById('greenBarText2'),
+  document.getElementById('greenBarText3')
 ];
 const greenEffects = [
-    document.getElementById('greenEffect1'),
-    document.getElementById('greenEffect2'),
-    document.getElementById('greenEffect3')
+  document.getElementById('greenEffect1'),
+  document.getElementById('greenEffect2'),
+  document.getElementById('greenEffect3')
 ];
 const reelButton = document.getElementById('reelButton');
 const resetButton = document.getElementById('resetButton');
@@ -37,59 +37,59 @@ const gameOverScreen = document.getElementById('gameOverScreen');
 const gameOverText = document.getElementById('gameOverText');
 const gameOverResetBtn = document.getElementById('gameOverResetBtn');
 const waterSection = document.querySelector('.water-section');
+const skillTooltip = document.getElementById('skillTooltip');
 
-// ===================== 2. 游戏核心配置（精简无用配置，保留核心参数） =====================
+// ===================== 2. 游戏核心配置 =====================
 const DEFAULT_CONFIG = {
-    playerStamina: 1500,
-    normalFishHealth: 10000,
-    bossFishHealth: 20000,
-    playerDamage: 10,
-    fullHpMultiplier: 2,
-    orangeMin: 2,          // 橙色条增长速度（移动端适配）
-    orangeMax: 8,
-    orangeSlowMin: 1,
-    orangeSlowMax: 4,
-    bulletTimeDec: 0.01,
-    greenSlow: 0.03,       // 能量增长速度
-    greenFast: 1.5,
-    barCapacity: 100,
-    maxEnergy: 300,
-    fishSlow: 4,           // 鱼掉血速度（非判定区）
-    fishFast: 25,          // 鱼掉血速度（判定区）
-    skill1Cost: 100,
-    skill1Damage: 1000,
-    skill2Cost: 100,
-    skill2Heal: 200,
-    skill3Cost: 300,
-    skill3Damage: 4000,
-    moveSpeedMin: 0.03,    // BOSS判定区移动速度
-    moveSpeedMax: 0.08,
-    sizeSpeedMin: 0.01,
-    sizeSpeedMax: 0.05,
-    dirChangeMin: 600,     // 判定区变换间隔
-    dirChangeMax: 1200,
-    bossPhase2Hp: 50,
-    phase2MoveMulti: 1.8,  // 二阶段判定区速度倍率
-    phase2SizeMulti: 1.8,
-    phase2MinLeft: 20,
-    phase2MaxLeft: 95,
-    phase2MinWidth: 5,
-    phase2MaxWidth: 50,
-    bulletTimeDur: 2000,   // 子弹时间时长（ms）
-    fishDirChangeMin: 2500,// 鱼方向切换间隔
-    fishDirChangeMax: 4500,
-    correctDirectionBonus: 0.4,
-    wrongDirectionPenalty: 0.4,
-    centerPullStrength: 2.5,
-    correctEnergyMultiplier: 2.5,
-    playerSlowDownRate: 0.5,
-    playerNormalDownRate: 1.0,
-    // 水花特效配置
-    splashParticleCount: 5,
-    splashInterval: 300
+  playerStamina: 1500,
+  normalFishHealth: 10000,
+  bossFishHealth: 20000,
+  playerDamage: 10,
+  fullHpMultiplier: 2,
+  orangeMin: 2,
+  orangeMax: 8,
+  orangeSlowMin: 1,
+  orangeSlowMax: 4,
+  bulletTimeDec: 0.01,
+  greenSlow: 0.03,
+  greenFast: 1.5,
+  barCapacity: 100,
+  maxEnergy: 300,
+  fishSlow: 4,
+  fishFast: 25,
+
+  // 新技能消耗
+  skill1Cost: 100,
+  skill2Cost: 200,
+  skill3Cost: 300,
+
+  moveSpeedMin: 0.03,
+  moveSpeedMax: 0.08,
+  sizeSpeedMin: 0.01,
+  sizeSpeedMax: 0.05,
+  dirChangeMin: 600,
+  dirChangeMax: 1200,
+  bossPhase2Hp: 50,
+  phase2MoveMulti: 1.8,
+  phase2SizeMulti: 1.8,
+  phase2MinLeft: 20,
+  phase2MaxLeft: 95,
+  phase2MinWidth: 5,
+  phase2MaxWidth: 50,
+  bulletTimeDur: 2000,
+  fishDirChangeMin: 2500,
+  fishDirChangeMax: 4500,
+  correctDirectionBonus: 0.4,
+  wrongDirectionPenalty: 0.4,
+  centerPullStrength: 2.5,
+  correctEnergyMultiplier: 2.5,
+  playerSlowDownRate: 0.5,
+  playerNormalDownRate: 1.0,
+  splashParticleCount: 5,
+  splashInterval: 300,
 };
 
-// ===================== 3. 全局状态变量（精简初始化） =====================
+// ===================== 3. 全局状态 =====================
 let currentConfig = { ...DEFAULT_CONFIG };
 let orangeProgress = 0;
 let totalGreenEnergy = 0;
@@ -114,814 +114,641 @@ let sizeChangeTimer = null;
 let isBulletTime = false;
 let bulletTimeTimer = null;
 let lastFullBars = 0;
-let fishDirection = 1; // 1=右，-1=左
+let fishDirection = 1;
 let fishDirectionTimer = null;
 let isDragging = false;
 let dragStartX = 0;
 let dragDirection = 0;
-let playerDirection = 1; // 1=右，-1=左
+let playerDirection = 1;
 let splashTimer = null;
-let bulletTimeBeforeTarget = {
-    left: 60,
-    width: 25
-};
 
-// ===================== 4. 基础常量 =====================
+let bulletTimeBeforeTarget = { left: 60, width: 25 };
+
+// 新技能状态
+let skill1Active = false;
+let skill1EndTime = 0;
+
+let skill2Active = false;
+let skill2EndTime = 0;
+let skill2StoredDamage = 0;
+
 const BASE_TARGET_START = 60;
 const BASE_TARGET_END = 85;
 const BASE_TARGET_CENTER = (BASE_TARGET_START + BASE_TARGET_END) / 2;
+
 let BOSS_TARGET_MIN_LEFT = 40;
 let BOSS_TARGET_MAX_LEFT = 90;
 let BOSS_TARGET_MIN_WIDTH = 10;
 let BOSS_TARGET_MAX_WIDTH = 25;
 
-// ===================== 5. 核心功能模块 =====================
+// ===================== 技能描述 =====================
+const skillInfos = {
+  skill1: {
+    name: "稳流定钩",
+    cost: 1,
+    desc: `【消耗1格能量】
+判定区变大并固定，鱼挣扎减弱
+持续4秒，完美配合蓄力钓`
+  },
+  skill2: {
+    name: "聚能猛钓",
+    cost: 2,
+    desc: `【消耗2格能量】
+5秒内记录所有掉血
+结束时造成等量额外爆发
+先开稳流定钩收益最大`
+  },
+  skill3: {
+    name: "海韵共鸣",
+    cost: 3,
+    desc: `【消耗3格能量】
+召唤海韵光球从天而降
+清空拉力条，3秒全安全区
+巨量伤害，绝杀神技`
+  }
+};
 
-/**
- * 玩家朝向更新
- */
+// ===================== 长按提示工具 =====================
+function showSkillTooltip(button, info) {
+  skillTooltip.textContent = `${info.name} (消耗${info.cost}格)\n${info.desc}`;
+  skillTooltip.style.display = 'block';
+  const rect = button.getBoundingClientRect();
+  skillTooltip.style.left = rect.left + 'px';
+  skillTooltip.style.top = (rect.top - 70) + 'px';
+}
+function hideSkillTooltip() {
+  skillTooltip.style.display = 'none';
+}
+
+function bindSkillLongPress() {
+  function makeLongPress(btn, info) {
+    let timer;
+    btn.addEventListener('touchstart', () => {
+      timer = setTimeout(() => showSkillTooltip(btn, info), 500);
+    }, { passive: true });
+    btn.addEventListener('touchend', hideSkillTooltip);
+    btn.addEventListener('touchcancel', hideSkillTooltip);
+
+    btn.addEventListener('mousedown', () => {
+      timer = setTimeout(() => showSkillTooltip(btn, info), 500);
+    });
+    btn.addEventListener('mouseup', hideSkillTooltip);
+    btn.addEventListener('mouseleave', hideSkillTooltip);
+  }
+  makeLongPress(skill1Button, skillInfos.skill1);
+  makeLongPress(skill2Button, skillInfos.skill2);
+  makeLongPress(skill3Button, skillInfos.skill3);
+}
+
+// ===================== 4. 基础逻辑 =====================
 function updatePlayerDirectionDisplay() {
-    directionText.textContent = playerDirection === 1 ? '朝右' : '朝左';
+  directionText.textContent = playerDirection === 1 ? '朝右' : '朝左';
 }
-
 function setPlayerDirection(direction) {
-    if (direction === 1 || direction === -1) {
-        playerDirection = direction;
-        updatePlayerDirectionDisplay();
-    }
+  if (direction === 1 || direction === -1) {
+    playerDirection = direction;
+    updatePlayerDirectionDisplay();
+  }
 }
 
-/**
- * 鱼方向切换逻辑
- */
 function getRandomFishDirChangeTime() {
-    return Math.random() * (currentConfig.fishDirChangeMax - currentConfig.fishDirChangeMin) + currentConfig.fishDirChangeMin;
+  return Math.random() * (currentConfig.fishDirChangeMax - currentConfig.fishDirChangeMin) + currentConfig.fishDirChangeMin;
 }
-
 function switchFishDirection() {
-    if (gameOver) return;
-    fishDirection = fishDirection === 1 ? -1 : 1;
-    fishIcon.classList.toggle('left', fishDirection === -1);
-    clearTimeout(fishDirectionTimer);
-    fishDirectionTimer = setTimeout(switchFishDirection, getRandomFishDirChangeTime());
+  if (gameOver) return;
+  fishDirection = fishDirection === 1 ? -1 : 1;
+  fishIcon.classList.toggle('left', fishDirection === -1);
+  clearTimeout(fishDirectionTimer);
+  fishDirectionTimer = setTimeout(switchFishDirection, getRandomFishDirChangeTime());
 }
-
 function initFishDirectionTimer() {
-    clearTimeout(fishDirectionTimer);
-    fishDirectionTimer = setTimeout(switchFishDirection, getRandomFishDirChangeTime());
+  clearTimeout(fishDirectionTimer);
+  fishDirectionTimer = setTimeout(switchFishDirection, getRandomFishDirChangeTime());
 }
 
-/**
- * 拖动交互（移动端优化）
- */
 function handleDragStart(e) {
-    e.preventDefault();
-    if (gameOver) return;
-    isDragging = true;
-    isHolding = true;
-    reelButton.classList.add('dragging');
-    dragStartX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
+  e.preventDefault();
+  if (gameOver) return;
+  isDragging = true;
+  isHolding = true;
+  reelButton.classList.add('dragging');
+  dragStartX = e.type === 'touchstart' ? e.touches[0].clientX : e.clientX;
 }
-
 function handleDragMove(e) {
-    e.preventDefault();
-    if (!isDragging || gameOver) return;
-    const currentX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
-    const deltaX = currentX - dragStartX;
-    
-    // 降低拖动阈值，适配移动端
-    if (deltaX > 20) {
-        dragDirection = 1;
-        setPlayerDirection(1);
-    } else if (deltaX < -20) {
-        dragDirection = -1;
-        setPlayerDirection(-1);
-    } else {
-        dragDirection = 0;
-    }
-    
-    // 更新按钮和状态样式
-    const isCorrect = isDragDirectionCorrect();
-    reelButton.classList.toggle('correct-direction', isCorrect);
-    status.classList.toggle('correct', isCorrect);
-    status.classList.toggle('wrong', !isCorrect && dragDirection !== 0);
-}
-
-function handleDragEnd(e) {
-    e.preventDefault();
-    if (!isDragging) return;
-    isDragging = false;
-    isHolding = false;
-    reelButton.classList.remove('dragging', 'correct-direction');
+  e.preventDefault();
+  if (!isDragging || gameOver) return;
+  const currentX = e.type === 'touchmove' ? e.touches[0].clientX : e.clientX;
+  const deltaX = currentX - dragStartX;
+  if (deltaX > 20) {
+    dragDirection = 1;
+    setPlayerDirection(1);
+  } else if (deltaX < -20) {
+    dragDirection = -1;
+    setPlayerDirection(-1);
+  } else {
     dragDirection = 0;
-    status.classList.remove('correct', 'wrong');
+  }
+  const isCorrect = isDragDirectionCorrect();
+  reelButton.classList.toggle('correct-direction', isCorrect);
+  status.classList.toggle('correct', isCorrect);
+  status.classList.toggle('wrong', !isCorrect && dragDirection !== 0);
 }
-
+function handleDragEnd(e) {
+  e.preventDefault();
+  if (!isDragging) return;
+  isDragging = false;
+  isHolding = false;
+  reelButton.classList.remove('dragging', 'correct-direction');
+  dragDirection = 0;
+  status.classList.remove('correct', 'wrong');
+}
 function isDragDirectionCorrect() {
-    return dragDirection === -fishDirection && dragDirection !== 0;
+  return dragDirection === -fishDirection && dragDirection !== 0;
 }
 
-/**
- * 拉力条居中逻辑
- */
 function getTargetCenter() {
-    return isBossMode ? (targetZoneLeft + targetZoneWidth / 2) : BASE_TARGET_CENTER;
+  return isBossMode ? (targetZoneLeft + targetZoneWidth / 2) : BASE_TARGET_CENTER;
 }
-
 function pullToCenter() {
-    if (!isDragDirectionCorrect() || gameOver) return;
-    const center = getTargetCenter();
-    const distance = orangeProgress - center;
-    if (Math.abs(distance) > 0.5) {
-        const pullAmount = (distance > 0 ? -1 : 1) * currentConfig.centerPullStrength * 0.1;
-        orangeProgress = Math.max(0, Math.min(100, orangeProgress + pullAmount));
-    }
-}
-
-/**
- * 能量粒子特效
- */
-function getParticleStartPosition() {
-    const topBarRect = document.querySelector('.top-bar').getBoundingClientRect();
-    const startX = topBarRect.left + (orangeProgress / 100) * topBarRect.width;
-    const startY = topBarRect.top + topBarRect.height / 2;
-    return { x: startX, y: startY };
-}
-
-function getParticleTargetPosition() {
-    const barIndex = Math.min(Math.floor(totalGreenEnergy / currentConfig.barCapacity), greenFills.length - 1);
-    const bar = greenFills[barIndex];
-    const barRect = bar.parentElement.getBoundingClientRect();
-    const fillPercent = parseFloat(bar.style.width) || 0;
-    const targetX = barRect.left + (fillPercent / 100) * barRect.width;
-    const targetY = barRect.top + barRect.height / 2;
-    return { x: targetX, y: targetY };
+  if (!isDragDirectionCorrect() || gameOver) return;
+  const center = getTargetCenter();
+  const distance = orangeProgress - center;
+  if (Math.abs(distance) > 0.5) {
+    const pullAmount = (distance > 0 ? -1 : 1) * currentConfig.centerPullStrength * 0.1;
+    orangeProgress = Math.max(0, Math.min(100, orangeProgress + pullAmount));
+  }
 }
 
 function createParticle() {
-    if (!isInTargetZone() || gameOver) return;
-    
-    const startPos = getParticleStartPosition();
-    const targetPos = getParticleTargetPosition();
-    
-    const particle = document.createElement('div');
-    particle.classList.add('particle');
-    particle.style.left = `${startPos.x}px`;
-    particle.style.top = `${startPos.y}px`;
-    
-    // 粒子样式
-    const size = isDragDirectionCorrect() ? (Math.random() * 7 + 4) : (Math.random() * 5 + 3);
-    particle.style.width = `${size}px`;
-    particle.style.height = `${size}px`;
-    particle.style.background = isDragDirectionCorrect() ? 'rgba(76, 175, 80, 0.9)' : '#00bfa5';
-    
-    const duration = Math.random() * 1.2 + 0.4;
-    particle.style.animationDuration = `${duration}s`;
-    particle.style.setProperty('--target-x', targetPos.x - startPos.x);
-    particle.style.setProperty('--target-y', targetPos.y - startPos.y);
-    particle.style.animationName = 'particle-to-energy';
-    
-    particleContainer.appendChild(particle);
-    setTimeout(() => particle.remove(), duration * 1000);
-}
+  if (!isInTargetZone() || gameOver) return;
+  const topBarRect = document.querySelector('.top-bar').getBoundingClientRect();
+  const startX = topBarRect.left + (orangeProgress / 100) * topBarRect.width;
+  const startY = topBarRect.top + topBarRect.height / 2;
+  const barIndex = Math.min(Math.floor(totalGreenEnergy / currentConfig.barCapacity), greenFills.length - 1);
+  const barRect = greenFills[barIndex].parentElement.getBoundingClientRect();
+  const targetX = barRect.left + (parseFloat(greenFills[barIndex].style.width) || 0) / 100 * barRect.width;
+  const targetY = barRect.top + barRect.height / 2;
 
+  const p = document.createElement('div');
+  p.classList.add('particle');
+  p.style.left = startX + 'px';
+  p.style.top = startY + 'px';
+  p.style.width = p.style.height = (Math.random() * 7 + 4) + 'px';
+  p.style.background = isDragDirectionCorrect() ? 'rgba(76,175,80,0.9)' : '#00bfa5';
+  const dur = Math.random() * 1.2 + 0.4;
+  p.style.animationDuration = dur + 's';
+  p.style.setProperty('--target-x', targetX - startX);
+  p.style.setProperty('--target-y', targetY - startY);
+  p.style.animationName = 'particle-to-energy';
+  particleContainer.appendChild(p);
+  setTimeout(() => p.remove(), dur * 1000);
+}
 function particleLoop() {
-    if (isInTargetZone() && !gameOver) {
-        const baseCount = Math.floor(Math.random() * 1) + 1;
-        const particleCount = isDragDirectionCorrect() ? Math.floor(baseCount * 1.5) : baseCount;
-        for (let i = 0; i < particleCount; i++) {
-            createParticle();
-        }
-    }
-}
-
-/**
- * 鱼水花特效
- */
-function getFishTailPosition() {
-    const fishIconRect = fishIcon.getBoundingClientRect();
-    let tailX, tailY;
-    
-    if (fishDirection === 1) {
-        tailX = fishIconRect.left - 10;
-        tailY = fishIconRect.top + fishIconRect.height / 2;
-    } else {
-        tailX = fishIconRect.right + 10;
-        tailY = fishIconRect.top + fishIconRect.height / 2;
-    }
-    
-    return { x: tailX, y: tailY };
+  if (isInTargetZone() && !gameOver) {
+    const c = Math.floor(Math.random() * 1) + 1;
+    for (let i = 0; i < c; i++) createParticle();
+  }
 }
 
 function createFishSplashParticle() {
-    if (gameOver) return;
-    
-    const tailPos = getFishTailPosition();
-    const particle = document.createElement('div');
-    particle.classList.add('fish-splash-particle');
-    particle.style.left = `${tailPos.x}px`;
-    particle.style.top = `${tailPos.y}px`;
-    
-    // 粒子样式
-    const size = Math.random() * 4 + 4;
-    particle.style.width = `${size}px`;
-    particle.style.height = `${size}px`;
-    const duration = Math.random() * 0.7 + 0.8;
-    particle.style.animationDuration = `${duration}s`;
-    particle.style.animationName = fishDirection === 1 ? 'fishSplashLeft' : 'fishSplashRight';
-    particle.style.transform = `translate(${Math.random() * 10 - 5}px, ${Math.random() * 10 - 5}px) scale(0)`;
-    
-    fishSplashContainer.appendChild(particle);
-    setTimeout(() => particle.remove(), duration * 1000);
+  if (gameOver) return;
+  const r = fishIcon.getBoundingClientRect();
+  const x = fishDirection === 1 ? r.left - 10 : r.right + 10;
+  const y = r.top + r.height / 2;
+  const p = document.createElement('div');
+  p.classList.add('fish-splash-particle');
+  p.style.left = x + 'px';
+  p.style.top = y + 'px';
+  p.style.width = p.style.height = (Math.random() * 4 + 4) + 'px';
+  const dur = Math.random() * 0.7 + 0.8;
+  p.style.animationDuration = dur + 's';
+  p.style.animationName = fishDirection === 1 ? 'fishSplashLeft' : 'fishSplashRight';
+  fishSplashContainer.appendChild(p);
+  setTimeout(() => p.remove(), dur * 1000);
 }
-
 function startFishSplashLoop() {
-    clearInterval(splashTimer);
-    if (gameOver) return;
-    
-    splashTimer = setInterval(() => {
-        for (let i = 0; i < currentConfig.splashParticleCount; i++) {
-            createFishSplashParticle();
-        }
-    }, currentConfig.splashInterval);
+  clearInterval(splashTimer);
+  splashTimer = setInterval(() => {
+    for (let i = 0; i < currentConfig.splashParticleCount; i++) createFishSplashParticle();
+  }, currentConfig.splashInterval);
 }
-
 function stopFishSplashLoop() {
-    clearInterval(splashTimer);
-    fishSplashContainer.innerHTML = '';
+  clearInterval(splashTimer);
+  fishSplashContainer.innerHTML = '';
 }
 
-/**
- * 数值计算工具函数
- */
 function getRandomOrangeValue() {
-    let baseValue = Math.random() * (currentConfig.orangeMax - currentConfig.orangeMin) + currentConfig.orangeMin;
-    if (isHolding && dragDirection !== 0 && !isDragDirectionCorrect()) {
-        baseValue *= (1 + currentConfig.wrongDirectionPenalty);
-    }
-    return baseValue;
+  let v = Math.random() * (currentConfig.orangeMax - currentConfig.orangeMin) + currentConfig.orangeMin;
+  if (isHolding && dragDirection !== 0 && !isDragDirectionCorrect()) v *= 1.4;
+  return v;
 }
-
 function getSlowOrangeDecValue() {
-    let baseValue = Math.random() * (currentConfig.orangeSlowMax - currentConfig.orangeSlowMin) + currentConfig.orangeSlowMin;
-    if (isHolding && dragDirection !== 0 && isDragDirectionCorrect()) {
-        baseValue *= (1 - currentConfig.correctDirectionBonus);
-    }
-    return baseValue;
+  let v = Math.random() * (currentConfig.orangeSlowMax - currentConfig.orangeSlowMin) + currentConfig.orangeSlowMin;
+  if (isHolding && dragDirection !== 0 && isDragDirectionCorrect()) v *= 0.6;
+  return v;
 }
-
 function getOrangeDownRate() {
-    return playerDirection === -fishDirection ? currentConfig.playerSlowDownRate : currentConfig.playerNormalDownRate;
+  return playerDirection === -fishDirection ? 0.5 : 1.0;
 }
-
 function getRandomMoveSpeed() {
-    const baseSpeed = Math.random() * (currentConfig.moveSpeedMax - currentConfig.moveSpeedMin) + currentConfig.moveSpeedMin;
-    return isBossPhase2 ? baseSpeed * currentConfig.phase2MoveMulti : baseSpeed;
+  const s = Math.random() * (currentConfig.moveSpeedMax - currentConfig.moveSpeedMin) + currentConfig.moveSpeedMin;
+  return isBossPhase2 ? s * 1.8 : s;
 }
-
 function getRandomSizeSpeed() {
-    const baseSpeed = Math.random() * (currentConfig.sizeSpeedMax - currentConfig.sizeSpeedMin) + currentConfig.sizeSpeedMin;
-    return isBossPhase2 ? baseSpeed * currentConfig.phase2SizeMulti : baseSpeed;
+  const s = Math.random() * (currentConfig.sizeSpeedMax - currentConfig.sizeSpeedMin) + currentConfig.sizeSpeedMin;
+  return isBossPhase2 ? s * 1.8 : s;
 }
-
 function getRandomChangeTime() {
-    return Math.random() * (currentConfig.dirChangeMax - currentConfig.dirChangeMin) + currentConfig.dirChangeMin;
+  return Math.random() * (currentConfig.dirChangeMax - currentConfig.dirChangeMin) + currentConfig.dirChangeMin;
 }
 
-/**
- * BOSS阶段判断（含背景切换）
- */
 function checkBossPhase2() {
-    if (!isBossMode) {
-        waterSection?.classList.remove('boss-phase2');
-        return false;
-    }
-    
-    const currentHpPercent = (fishHealth / fishHealthMax) * 100;
-    const isPhase2 = currentHpPercent <= currentConfig.bossPhase2Hp;
-    
-    // 切换水域背景
-    waterSection?.classList.toggle('boss-phase2', isPhase2);
-    
-    if (isPhase2 && !isBossPhase2) {
-        BOSS_TARGET_MIN_LEFT = currentConfig.phase2MinLeft;
-        BOSS_TARGET_MAX_LEFT = currentConfig.phase2MaxLeft;
-        BOSS_TARGET_MIN_WIDTH = currentConfig.phase2MinWidth;
-        BOSS_TARGET_MAX_WIDTH = currentConfig.phase2MaxWidth;
-        randomizeMoveDirection();
-        randomizeSizeDirection();
-        status.textContent = '[BOSS模式-第二阶段] BOSS进入狂暴状态！判定区变化更快、范围更大！';
-        status.style.color = '#d81b60';
-    }
-    
-    isBossPhase2 = isPhase2;
-    return isPhase2;
+  if (!isBossMode) {
+    waterSection.classList.remove('boss-phase2');
+    return false;
+  }
+  const pct = (fishHealth / fishHealthMax) * 100;
+  const ph2 = pct <= 50;
+  waterSection.classList.toggle('boss-phase2', ph2);
+  if (ph2 && !isBossPhase2) {
+    BOSS_TARGET_MIN_LEFT = 20;
+    BOSS_TARGET_MAX_LEFT = 95;
+    BOSS_TARGET_MIN_WIDTH = 5;
+    BOSS_TARGET_MAX_WIDTH = 50;
+    randomizeMoveDirection();
+    randomizeSizeDirection();
+    status.textContent = "BOSS进入第二阶段！";
+  }
+  isBossPhase2 = ph2;
+  return ph2;
 }
 
-/**
- * 子弹时间核心逻辑
- */
 function startBulletTime() {
-    if (isBulletTime) return;
-    isBulletTime = true;
-    
-    // 记录判定区状态
-    bulletTimeBeforeTarget.left = targetZoneLeft;
-    bulletTimeBeforeTarget.width = targetZoneWidth;
-    
-    // 更新样式
-    targetZone.classList.add('bullet-time-full');
-    targetZone.style.left = '0%';
-    targetZone.style.width = '100%';
-    orangeFill.classList.add('bullet-time');
-    bulletTimeNotice.textContent = `子弹时间！${currentConfig.bulletTimeDur/1000}秒内判定区全满，鱼1.5倍掉血！`;
-    bulletTimeNotice.classList.add('show');
-    
-    // 状态提示
-    const statusText = `${isBossMode ? (isBossPhase2 ? '[BOSS模式-第二阶段] ' : '[BOSS模式] ') : ''}[子弹时间🔥] 判定区全满！鱼1.5倍持续掉血 | 总能量: ${Math.round(totalGreenEnergy)}/${currentConfig.maxEnergy}`;
-    status.textContent = statusText;
-    status.style.color = '#ffd700';
-    
-    // 定时器结束子弹时间
-    clearTimeout(bulletTimeTimer);
-    bulletTimeTimer = setTimeout(endBulletTime, currentConfig.bulletTimeDur);
+  if (isBulletTime) return;
+  isBulletTime = true;
+  bulletTimeBeforeTarget = { left: targetZoneLeft, width: targetZoneWidth };
+  targetZone.classList.add('bullet-time-full');
+  targetZone.style.left = '0%';
+  targetZone.style.width = '100%';
+  orangeFill.classList.add('bullet-time');
+  bulletTimeNotice.textContent = `子弹时间！`;
+  bulletTimeNotice.classList.add('show');
+  clearTimeout(bulletTimeTimer);
+  bulletTimeTimer = setTimeout(endBulletTime, 2000);
 }
-
 function endBulletTime() {
-    isBulletTime = false;
-    
-    // 恢复判定区
-    targetZone.classList.remove('bullet-time-full');
-    targetZoneLeft = bulletTimeBeforeTarget.left;
-    targetZoneWidth = bulletTimeBeforeTarget.width;
-    targetZone.style.left = `${targetZoneLeft}%`;
-    targetZone.style.width = `${targetZoneWidth}%`;
-    
-    // 恢复样式
-    orangeFill.classList.remove('bullet-time');
-    bulletTimeNotice.classList.remove('show');
-    
-    // 恢复状态文字颜色
-    status.style.color = isInTargetZone() ? '#ffffff' : '#f44336';
+  isBulletTime = false;
+  targetZone.classList.remove('bullet-time-full');
+  targetZoneLeft = bulletTimeBeforeTarget.left;
+  targetZoneWidth = bulletTimeBeforeTarget.width;
+  targetZone.style.left = targetZoneLeft + '%';
+  targetZone.style.width = targetZoneWidth + '%';
+  orangeFill.classList.remove('bullet-time');
+  bulletTimeNotice.classList.remove('show');
 }
 
-/**
- * BOSS判定区动态更新
- */
 function updateTargetZone() {
-    if (!isBossMode) return;
-    checkBossPhase2();
-    
-    // 更新位置
-    targetZoneLeft += targetMoveSpeed * targetMoveDirection;
-    const targetRight = targetZoneLeft + targetZoneWidth;
-    if (targetZoneLeft <= BOSS_TARGET_MIN_LEFT) {
-        targetZoneLeft = BOSS_TARGET_MIN_LEFT;
-        targetMoveDirection = 1;
-    } else if (targetRight >= BOSS_TARGET_MAX_LEFT) {
-        targetZoneLeft = BOSS_TARGET_MAX_LEFT - targetZoneWidth;
-        targetMoveDirection = -1;
-    }
-    
-    // 更新宽度
-    targetZoneWidth += targetSizeSpeed * targetSizeDirection;
-    if (targetZoneWidth <= BOSS_TARGET_MIN_WIDTH) {
-        targetZoneWidth = BOSS_TARGET_MIN_WIDTH;
-        targetSizeDirection = 1;
-    } else if (targetZoneWidth >= BOSS_TARGET_MAX_WIDTH) {
-        targetZoneWidth = BOSS_TARGET_MAX_WIDTH;
-        targetSizeDirection = -1;
-    }
-    
-    // 应用样式
-    targetZone.style.left = `${targetZoneLeft}%`;
-    targetZone.style.width = `${targetZoneWidth}%`;
+  if (!isBossMode) return;
+  checkBossPhase2();
+  targetZoneLeft += targetMoveSpeed * targetMoveDirection;
+  const right = targetZoneLeft + targetZoneWidth;
+  if (targetZoneLeft <= BOSS_TARGET_MIN_LEFT) {
+    targetZoneLeft = BOSS_TARGET_MIN_LEFT;
+    targetMoveDirection = 1;
+  }
+  if (right >= BOSS_TARGET_MAX_LEFT) {
+    targetZoneLeft = BOSS_TARGET_MAX_LEFT - targetZoneWidth;
+    targetMoveDirection = -1;
+  }
+  targetZoneWidth += targetSizeSpeed * targetSizeDirection;
+  if (targetZoneWidth <= BOSS_TARGET_MIN_WIDTH) {
+    targetZoneWidth = BOSS_TARGET_MIN_WIDTH;
+    targetSizeDirection = 1;
+  }
+  if (targetZoneWidth >= BOSS_TARGET_MAX_WIDTH) {
+    targetZoneWidth = BOSS_TARGET_MAX_WIDTH;
+    targetSizeDirection = -1;
+  }
+  targetZone.style.left = targetZoneLeft + '%';
+  targetZone.style.width = targetZoneWidth + '%';
 }
-
 function randomizeMoveDirection() {
-    if (!isBossMode) return;
-    targetMoveDirection = Math.random() > 0.5 ? 1 : -1;
-    targetMoveSpeed = getRandomMoveSpeed();
-    clearTimeout(directionChangeTimer);
-    directionChangeTimer = setTimeout(randomizeMoveDirection, getRandomChangeTime());
+  if (!isBossMode) return;
+  targetMoveDirection = Math.random() > 0.5 ? 1 : -1;
+  targetMoveSpeed = getRandomMoveSpeed();
+  clearTimeout(directionChangeTimer);
+  directionChangeTimer = setTimeout(randomizeMoveDirection, getRandomChangeTime());
 }
-
 function randomizeSizeDirection() {
-    if (!isBossMode) return;
-    targetSizeDirection = Math.random() > 0.5 ? 1 : -1;
-    targetSizeSpeed = getRandomSizeSpeed();
-    clearTimeout(sizeChangeTimer);
-    sizeChangeTimer = setTimeout(randomizeSizeDirection, getRandomChangeTime());
+  if (!isBossMode) return;
+  targetSizeDirection = Math.random() > 0.5 ? 1 : -1;
+  targetSizeSpeed = getRandomSizeSpeed();
+  clearTimeout(sizeChangeTimer);
+  sizeChangeTimer = setTimeout(randomizeSizeDirection, getRandomChangeTime());
 }
 
 function isInTargetZone() {
-    const targetStart = isBossMode ? targetZoneLeft : BASE_TARGET_START;
-    const targetEnd = isBossMode ? (targetZoneLeft + targetZoneWidth) : BASE_TARGET_END;
-    return orangeProgress >= targetStart && orangeProgress < targetEnd;
+  const L = isBossMode ? targetZoneLeft : 60;
+  const R = isBossMode ? targetZoneLeft + targetZoneWidth : 85;
+  return orangeProgress >= L && orangeProgress < R;
 }
 
-/**
- * 能量条更新
- */
+// ===================== 新技能核心实现 =====================
+
+// 技能1：稳流定钩
+function useSkill1() {
+  const cost = currentConfig.skill1Cost;
+  if (gameOver || totalGreenEnergy < cost) return;
+  totalGreenEnergy -= cost;
+
+  skill1Active = true;
+  skill1EndTime = Date.now() + 4000;
+
+  // 判定区变大固定
+  if (!isBossMode) {
+    targetZoneLeft = 50;
+    targetZoneWidth = 40;
+  } else {
+    targetZoneWidth = Math.min(targetZoneWidth * 1.5, 60);
+  }
+  targetZone.style.left = targetZoneLeft + '%';
+  targetZone.style.width = targetZoneWidth + '%';
+
+  status.textContent = "✅ 稳流定钩：判定区扩大固定4秒";
+  updateGreenBarsDisplay();
+  updateSkillButtons();
+}
+
+// 技能2：聚能猛钓
+function useSkill2() {
+  const cost = currentConfig.skill2Cost;
+  if (gameOver || totalGreenEnergy < cost) return;
+  totalGreenEnergy -= cost;
+
+  skill2Active = true;
+  skill2EndTime = Date.now() + 5000;
+  skill2StoredDamage = 0;
+
+  status.textContent = "⚡ 聚能猛钓：5秒蓄力开始！";
+  updateGreenBarsDisplay();
+  updateSkillButtons();
+}
+function skill2Burst() {
+  if (!skill2StoredDamage || skill2StoredDamage <= 0) return;
+  const dmg = skill2StoredDamage;
+  fishHealth -= dmg;
+  skill2StoredDamage = 0;
+  status.textContent = `💥 聚能爆发：额外造成 ${Math.round(dmg)} 伤害！`;
+  updateFishHealthUI();
+  checkGameOver();
+}
+
+// 技能3：海韵共鸣
+function useSkill3() {
+  const cost = currentConfig.skill3Cost;
+  if (gameOver || totalGreenEnergy < cost) return;
+  totalGreenEnergy -= cost;
+
+  // 巨量伤害
+  fishHealth -= 5000;
+  // 清空拉力
+  orangeProgress = 0;
+  // 3秒全安全区
+  startBulletTime();
+
+  status.textContent = "🌊 海韵共鸣：绝杀！3秒全安全区！";
+  updateGreenBarsDisplay();
+  updateFishHealthUI();
+  checkGameOver();
+}
+
+// ===================== 技能结束恢复 =====================
+function updateSkillStates() {
+  const now = Date.now();
+
+  if (skill1Active && now >= skill1EndTime) {
+    skill1Active = false;
+    if (!isBossMode) {
+      targetZoneLeft = 60;
+      targetZoneWidth = 25;
+      targetZone.style.left = '60%';
+      targetZone.style.width = '25%';
+    }
+    status.textContent = "稳流定钩效果结束";
+  }
+
+  if (skill2Active && now >= skill2EndTime) {
+    skill2Active = false;
+    skill2Burst();
+  }
+}
+
+// ===================== UI =====================
 function updateGreenBarsDisplay() {
-    let remainingEnergy = totalGreenEnergy;
-    const currentFullBars = Math.floor(totalGreenEnergy / currentConfig.barCapacity);
-    
-    // 满格触发子弹时间
-    if (currentFullBars > lastFullBars && !gameOver) {
-        startBulletTime();
-    }
-    lastFullBars = currentFullBars;
-    
-    // 更新能量条
-    for (let i = 0; i < greenFills.length; i++) {
-        const barCapacity = currentConfig.barCapacity;
-        const fillValue = Math.min(barCapacity, remainingEnergy);
-        const fillPercent = (fillValue / barCapacity) * 100;
-        
-        greenFills[i].style.width = `${fillPercent}%`;
-        greenBarTexts[i].textContent = `${Math.round(fillValue)}/${barCapacity}`;
-        greenFills[i].classList.toggle('full', fillPercent >= 100);
-        greenEffects[i].classList.toggle('active', fillPercent > 0 && fillPercent < 100);
-        
-        remainingEnergy -= barCapacity;
-        if (remainingEnergy <= 0) break;
-    }
-    
-    // 清空剩余能量条
-    for (let i = Math.ceil(totalGreenEnergy / currentConfig.barCapacity); i < greenFills.length; i++) {
-        greenFills[i].style.width = '0%';
-        greenBarTexts[i].textContent = '0/100';
-        greenFills[i].classList.remove('full');
-        greenEffects[i].classList.remove('active');
-    }
+  let e = totalGreenEnergy;
+  const full = Math.floor(e / currentConfig.barCapacity);
+  if (full > lastFullBars) startBulletTime();
+  lastFullBars = full;
+
+  for (let i = 0; i < greenFills.length; i++) {
+    const val = Math.min(currentConfig.barCapacity, e);
+    const pct = (val / currentConfig.barCapacity) * 100;
+    greenFills[i].style.width = pct + '%';
+    greenBarTexts[i].textContent = Math.round(val) + '/100';
+    greenFills[i].classList.toggle('full', pct >= 100);
+    greenEffects[i].classList.toggle('active', pct > 0 && pct < 100);
+    e -= currentConfig.barCapacity;
+    if (e <= 0) break;
+  }
+  for (let i = Math.ceil(totalGreenEnergy / currentConfig.barCapacity); i < greenFills.length; i++) {
+    greenFills[i].style.width = '0%';
+    greenBarTexts[i].textContent = '0/100';
+    greenFills[i].classList.remove('full');
+    greenEffects[i].classList.remove('active');
+  }
 }
 
-/**
- * 技能按钮状态更新
- */
 function updateSkillButtons() {
-    const availableFullBars = Math.floor(totalGreenEnergy / currentConfig.barCapacity);
-    skill1Button.disabled = availableFullBars < (currentConfig.skill1Cost / currentConfig.barCapacity) || gameOver;
-    skill2Button.disabled = availableFullBars < (currentConfig.skill2Cost / currentConfig.barCapacity) || gameOver;
-    skill3Button.disabled = availableFullBars < (currentConfig.skill3Cost / currentConfig.barCapacity) || gameOver;
-    reelButton.disabled = gameOver;
-    
-    // 更新按钮文字
-    skill1Button.textContent = `技能1 (${currentConfig.skill1Cost/100}能量)`;
-    skill2Button.textContent = `技能2 (恢复${currentConfig.skill2Heal}耐力，${currentConfig.skill2Cost/100}能量)`;
-    skill3Button.textContent = `技能3 (${currentConfig.skill3Cost/100}能量)`;
+  const enough1 = totalGreenEnergy >= currentConfig.skill1Cost;
+  const enough2 = totalGreenEnergy >= currentConfig.skill2Cost;
+  const enough3 = totalGreenEnergy >= currentConfig.skill3Cost;
+
+  skill1Button.disabled = !enough1 || gameOver;
+  skill2Button.disabled = !enough2 || gameOver;
+  skill3Button.disabled = !enough3 || gameOver;
+
+  skill1Button.textContent = `${skillInfos.skill1.name}\n${skillInfos.skill1.cost}格`;
+  skill2Button.textContent = `${skillInfos.skill2.name}\n${skillInfos.skill2.cost}格`;
+  skill3Button.textContent = `${skillInfos.skill3.name}\n${skillInfos.skill3.cost}格`;
 }
 
-/**
- * UI更新
- */
 function updateFishHealthUI() {
-    fishHealth = Math.max(0, Math.min(fishHealthMax, fishHealth));
-    const healthPercent = fishHealth / fishHealthMax;
-    const healthDeg = healthPercent * 360;
-    fishHealthFill.style.setProperty('--health-deg', `${healthDeg}deg`);
-    fishHealthText.textContent = `${Math.round(fishHealth)}/${fishHealthMax}`;
+  fishHealth = Math.max(0, Math.min(fishHealthMax, fishHealth));
+  const deg = (fishHealth / fishHealthMax) * 360;
+  fishHealthFill.style.setProperty('--health-deg', deg + 'deg');
+  fishHealthText.textContent = Math.round(fishHealth) + '/' + fishHealthMax;
 }
-
 function updatePlayerStaminaUI() {
-    playerStamina = Math.max(0, Math.min(playerStaminaMax, playerStamina));
-    const staminaPercent = (playerStamina / playerStaminaMax) * 100;
-    playerStaminaFill.style.width = `${staminaPercent}%`;
-    playerStaminaText.textContent = `耐力：${Math.round(playerStamina)}/${playerStaminaMax}`;
+  playerStamina = Math.max(0, Math.min(playerStaminaMax, playerStamina));
+  const pct = (playerStamina / playerStaminaMax) * 100;
+  playerStaminaFill.style.width = pct + '%';
+  playerStaminaText.textContent = `耐力：${Math.round(playerStamina)}/${playerStaminaMax}`;
 }
 
 function checkGameOver() {
-    if (fishHealth <= 0) {
-        gameOver = true;
-        endBulletTime();
-        stopFishSplashLoop();
-        waterSection?.classList.remove('boss-phase2');
-        clearTimeout(fishDirectionTimer);
-        reelButton.classList.remove('correct-direction');
-        status.classList.remove('correct', 'wrong');
-        gameOverText.textContent = `恭喜！鱼已被捕获！剩余耐力: ${Math.round(playerStamina)}`;
-        gameOverScreen.style.display = 'block';
-        status.textContent = `恭喜！鱼已被捕获！点击重置按钮重新开始 | 剩余耐力: ${Math.round(playerStamina)}`;
-        status.style.color = '#4caf50';
-        updateSkillButtons();
-    } else if (playerStamina <= 0) {
-        gameOver = true;
-        endBulletTime();
-        stopFishSplashLoop();
-        waterSection?.classList.remove('boss-phase2');
-        clearTimeout(fishDirectionTimer);
-        reelButton.classList.remove('correct-direction');
-        status.classList.remove('correct', 'wrong');
-        gameOverText.textContent = `游戏失败！你的耐力已耗尽！`;
-        gameOverScreen.style.display = 'block';
-        status.textContent = `游戏失败！你的耐力已耗尽！点击重置按钮重新开始`;
-        status.style.color = '#f44336';
-        updateSkillButtons();
-    }
+  if (fishHealth <= 0) {
+    gameOver = true;
+    gameOverText.textContent = "捕获成功！";
+    gameOverScreen.style.display = "block";
+  } else if (playerStamina <= 0) {
+    gameOver = true;
+    gameOverText.textContent = "耐力耗尽！";
+    gameOverScreen.style.display = "block";
+  }
+  if (gameOver) {
+    endBulletTime();
+    stopFishSplashLoop();
+    updateSkillButtons();
+  }
 }
 
 function updateUI() {
-    if (gameOver) return;
-    
-    // 边界限制
-    orangeProgress = Math.max(0, Math.min(100, orangeProgress));
-    totalGreenEnergy = Math.max(0, Math.min(currentConfig.maxEnergy, totalGreenEnergy));
-    
-    // 更新拉力条样式
-    orangeFill.style.width = `${orangeProgress}%`;
-    orangeFill.style.display = 'block';
-    orangeFill.classList.toggle('full-warning', orangeProgress >= 100);
-    
-    // BOSS判定区更新
-    if (isBossMode) updateTargetZone();
-    
-    // 核心逻辑更新
-    pullToCenter();
-    updateFishHealthUI();
-    updatePlayerStaminaUI();
-    
-    // 能量增长
-    let greenIncrement = isInTargetZone() ? currentConfig.greenFast : currentConfig.greenSlow;
-    if (isHolding && dragDirection !== 0 && isDragDirectionCorrect()) {
-        greenIncrement *= currentConfig.correctEnergyMultiplier;
-    }
-    totalGreenEnergy += greenIncrement;
-    
-    // 更新能量条和粒子
-    updateGreenBarsDisplay();
-    particleLoop();
-    
-    // 状态文本更新
-    if (!isBulletTime) {
-        const inTargetZone = isInTargetZone();
-        const targetStart = isBossMode ? targetZoneLeft : BASE_TARGET_START;
-        const targetEnd = isBossMode ? (targetZoneLeft + targetZoneWidth) : BASE_TARGET_END;
-        let statusText, statusColor;
-        
-        if (orangeProgress >= 100) {
-            statusText = `${isBossMode ? (isBossPhase2 ? '[BOSS模式-第二阶段] ' : '[BOSS模式] ') : ''}[警告！] 橙色条已满！耐力掉血翻倍 | 黄色区: ${Math.round(targetStart)}%-${Math.round(targetEnd)}% | 总能量: ${Math.round(totalGreenEnergy)}/${currentConfig.maxEnergy}`;
-            statusColor = '#dc3545';
-        } else if (inTargetZone) {
-            statusText = `${isBossMode ? (isBossPhase2 ? '[BOSS模式-第二阶段] ' : '[BOSS模式] ') : ''}在黄色区！橙色: ${Math.round(orangeProgress)}% | 黄色区: ${Math.round(targetStart)}%-${Math.round(targetEnd)}% | 总能量: ${Math.round(totalGreenEnergy)}/${currentConfig.maxEnergy} ${isDragDirectionCorrect() ? '| ✅ 摆杆方向正确！' : ''}`;
-            statusColor = '#ffffff';
-        } else {
-            statusText = `${isBossMode ? (isBossPhase2 ? '[BOSS模式-第二阶段] ' : '[BOSS模式] ') : ''}不在黄色区！橙色: ${Math.round(orangeProgress)}% | 黄色区: ${Math.round(targetStart)}%-${Math.round(targetEnd)}% | 总能量: ${Math.round(totalGreenEnergy)}/${currentConfig.maxEnergy} ${isHolding && dragDirection !== 0 && !isDragDirectionCorrect() ? '| ❌ 摆杆方向错误！' : ''}`;
-            statusColor = '#f44336';
-        }
-        
-        status.textContent = statusText;
-        status.style.color = statusColor;
-    }
-    
-    // 最终更新
-    updateSkillButtons();
-    checkGameOver();
+  if (gameOver) return;
+  orangeProgress = Math.max(0, Math.min(100, orangeProgress));
+  totalGreenEnergy = Math.max(0, Math.min(currentConfig.maxEnergy, totalGreenEnergy));
+  orangeFill.style.width = orangeProgress + '%';
+  orangeFill.classList.toggle('full-warning', orangeProgress >= 100);
+
+  if (isBossMode) updateTargetZone();
+  pullToCenter();
+  updateFishHealthUI();
+  updatePlayerStaminaUI();
+
+  let add = isInTargetZone() ? currentConfig.greenFast : currentConfig.greenSlow;
+  if (isDragDirectionCorrect()) add *= 2.5;
+  totalGreenEnergy += add;
+
+  updateGreenBarsDisplay();
+  particleLoop();
+  updateSkillStates();
+  updateSkillButtons();
+  checkGameOver();
 }
 
-/**
- * 主游戏循环
- */
+// ===================== 游戏循环 =====================
 function loop() {
-    if (gameOver) return;
-    
-    // 1. 橙色条增减逻辑
-    if (isHolding) {
-        const randomInc = getRandomOrangeValue();
-        orangeProgress += randomInc;
-    } else {
-        let randomDec;
-        if (isBulletTime) {
-            randomDec = currentConfig.bulletTimeDec;
-        } else {
-            const inTargetZone = isInTargetZone();
-            randomDec = inTargetZone ? getSlowOrangeDecValue() : getRandomOrangeValue();
-            randomDec *= getOrangeDownRate();
-        }
-        orangeProgress -= randomDec;
-    }
+  if (gameOver) return;
 
-    // 2. 鱼掉血逻辑（子弹时间1.5倍掉血）
-    const inTargetZone = isInTargetZone();
+  // 拉力条
+  if (isHolding) {
+    orangeProgress += getRandomOrangeValue();
+  } else {
+    let dec;
     if (isBulletTime) {
-        fishHealth -= currentConfig.fishFast * 1.5;
-    } else if (inTargetZone) {
-        fishHealth -= currentConfig.fishFast;
-    } else if (isHolding && !inTargetZone) {
-        fishHealth -= currentConfig.fishSlow;
-    }
-
-    // 3. 玩家耐力消耗
-    if (isHolding && !inTargetZone) {
-        const damageMultiplier = orangeProgress >= 100 ? currentConfig.fullHpMultiplier : 1;
-        const directionPenalty = (dragDirection !== 0 && !isDragDirectionCorrect()) ? 1.5 : 1;
-        playerStamina -= PLAYER_DAMAGE * damageMultiplier * directionPenalty;
-    }
-
-    // 4. 更新UI
-    updateUI();
-}
-
-/**
- * 鱼模式切换
- */
-function switchFishMode(isBoss) {
-    isBossMode = isBoss;
-    isBossPhase2 = false;
-    waterSection?.classList.remove('boss-phase2');
-    normalFishBtn.classList.toggle('active', !isBoss);
-    bossFishBtn.classList.toggle('active', isBoss);
-    
-    // 重置鱼参数
-    fishHealthMax = isBoss ? currentConfig.bossFishHealth : currentConfig.normalFishHealth;
-    fishHealth = fishHealthMax;
-    fishDirection = isBoss ? -1 : 1;
-    fishIcon.classList.toggle('left', isBoss);
-    
-    // 重置判定区
-    BOSS_TARGET_MIN_LEFT = 40;
-    BOSS_TARGET_MAX_LEFT = 90;
-    BOSS_TARGET_MIN_WIDTH = 10;
-    BOSS_TARGET_MAX_WIDTH = 25;
-    
-    if (isBossMode) {
-        targetZoneLeft = 60;
-        targetZoneWidth = 25;
-        targetZone.style.left = `${targetZoneLeft}%`;
-        targetZone.style.width = `${targetZoneWidth}%`;
-        randomizeMoveDirection();
-        randomizeSizeDirection();
+      dec = 0.01;
     } else {
-        targetZoneLeft = BASE_TARGET_START;
-        targetZoneWidth = 25;
-        targetZone.style.left = `${BASE_TARGET_START}%`;
-        targetZone.style.width = `${25}%`;
-        clearTimeout(directionChangeTimer);
-        clearTimeout(sizeChangeTimer);
+      dec = isInTargetZone() ? getSlowOrangeDecValue() : getRandomOrangeValue();
+      dec *= getOrangeDownRate();
     }
-    
-    // 重置游戏
-    resetGame();
+    orangeProgress -= dec;
+  }
+
+  // 掉血 & 蓄力钓记录
+  let dmg = 0;
+  if (isBulletTime) {
+    dmg = currentConfig.fishFast * 1.5;
+  } else if (isInTargetZone()) {
+    dmg = currentConfig.fishFast;
+  } else if (isHolding) {
+    dmg = currentConfig.fishSlow;
+  }
+  if (dmg > 0) {
+    fishHealth -= dmg;
+    if (skill2Active) skill2StoredDamage += dmg;
+  }
+
+  // 耐力消耗
+  if (isHolding && !isInTargetZone()) {
+    let mul = orangeProgress >= 100 ? 2 : 1;
+    if (dragDirection !== 0 && !isDragDirectionCorrect()) mul *= 1.5;
+    playerStamina -= currentConfig.playerDamage * mul;
+  }
+
+  updateUI();
 }
 
-/**
- * 游戏重置
- */
+// ===================== 模式 & 重置 =====================
+function switchFishMode(isBoss) {
+  isBossMode = isBoss;
+  isBossPhase2 = false;
+  waterSection.classList.remove('boss-phase2');
+  normalFishBtn.classList.toggle('active', !isBoss);
+  bossFishBtn.classList.toggle('active', isBoss);
+  fishHealthMax = isBoss ? currentConfig.bossFishHealth : currentConfig.normalFishHealth;
+  fishHealth = fishHealthMax;
+  resetGame();
+}
 function resetGame() {
-    // 核心状态重置
-    orangeProgress = 0;
-    totalGreenEnergy = 0;
-    fishHealth = fishHealthMax;
-    playerStamina = playerStaminaMax;
-    isHolding = false;
-    isDragging = false;
-    gameOver = false;
-    isBulletTime = false;
-    isBossPhase2 = false;
-    lastFullBars = 0;
-    dragDirection = 0;
-    playerDirection = 1;
-    
-    // 清空定时器
-    clearTimeout(bulletTimeTimer);
-    clearTimeout(fishDirectionTimer);
-    clearTimeout(directionChangeTimer);
-    clearTimeout(sizeChangeTimer);
-    stopFishSplashLoop();
-    
-    // UI重置
-    orangeFill.classList.remove('bullet-time', 'full-warning');
-    bulletTimeNotice.classList.remove('show');
-    orangeFill.style.width = '0%';
-    reelButton.classList.remove('dragging', 'correct-direction');
-    fishIcon.classList.toggle('left', fishDirection === -1);
-    updatePlayerDirectionDisplay();
-    particleContainer.innerHTML = '';
-    fishSplashContainer.innerHTML = '';
-    
-    // 能量条重置
-    greenFills.forEach((fill, index) => {
-        fill.style.width = '0%';
-        fill.classList.remove('full');
-        greenBarTexts[index].textContent = '0/100';
-    });
-    greenEffects.forEach(effect => effect.classList.remove('active'));
-    
-    // 状态文本重置
-    const defaultStatus = isBossMode 
-        ? `[BOSS模式] 按住并拖动收线按钮 | 黄色判定区：动态变化 | 总能量：0/${currentConfig.maxEnergy}`
-        : `按住并拖动收线按钮 | 黄色判定区：60%（含）-85%（不含） | 总能量：0/${currentConfig.maxEnergy}`;
-    status.textContent = defaultStatus;
-    status.style.color = '#ffffff';
-    status.classList.remove('correct', 'wrong');
-    
-    // 隐藏游戏结束弹窗
-    gameOverScreen.style.display = 'none';
-    
-    // 重新初始化
-    initFishDirectionTimer();
-    startFishSplashLoop();
-    if (intervalId) clearInterval(intervalId);
-    intervalId = setInterval(loop, 60);
-    
-    // 更新UI
-    updateUI();
+  orangeProgress = 0;
+  totalGreenEnergy = 0;
+  fishHealth = fishHealthMax;
+  playerStamina = currentConfig.playerStamina;
+  gameOver = false;
+  isBulletTime = false;
+  skill1Active = false;
+  skill2Active = false;
+  skill2StoredDamage = 0;
+
+  clearTimeout(bulletTimeTimer);
+  clearTimeout(fishDirectionTimer);
+  clearTimeout(directionChangeTimer);
+  clearTimeout(sizeChangeTimer);
+  stopFishSplashLoop();
+
+  orangeFill.classList.remove('bullet-time', 'full-warning');
+  bulletTimeNotice.classList.remove('show');
+  orangeFill.style.width = '0%';
+  if (!isBossMode) {
+    targetZoneLeft = 60;
+    targetZoneWidth = 25;
+    targetZone.style.left = '60%';
+    targetZone.style.width = '25%';
+  }
+  initFishDirectionTimer();
+  startFishSplashLoop();
+  gameOverScreen.style.display = 'none';
+  updateUI();
 }
 
-/**
- * 技能功能
- */
-function useSkill1() {
-    if (gameOver || Math.floor(totalGreenEnergy / currentConfig.barCapacity) < (currentConfig.skill1Cost / currentConfig.barCapacity)) return;
-    totalGreenEnergy -= currentConfig.skill1Cost;
-    fishHealth -= currentConfig.skill1Damage;
-    updateGreenBarsDisplay();
-    updateFishHealthUI();
-    updateSkillButtons();
-    checkGameOver();
-    status.textContent = `${status.textContent.split('|')[0]} | 技能1！造成${currentConfig.skill1Damage}伤害`;
-}
-
-function useSkill2() {
-    if (gameOver || Math.floor(totalGreenEnergy / currentConfig.barCapacity) < (currentConfig.skill2Cost / currentConfig.barCapacity)) return;
-    totalGreenEnergy -= currentConfig.skill2Cost;
-    playerStamina = Math.min(playerStaminaMax, playerStamina + currentConfig.skill2Heal);
-    updateGreenBarsDisplay();
-    updatePlayerStaminaUI();
-    updateSkillButtons();
-    status.textContent = `${status.textContent.split('|')[0]} | 技能2！恢复${currentConfig.skill2Heal}耐力`;
-}
-
-function useSkill3() {
-    if (gameOver || Math.floor(totalGreenEnergy / currentConfig.barCapacity) < (currentConfig.skill3Cost / currentConfig.barCapacity)) return;
-    totalGreenEnergy -= currentConfig.skill3Cost;
-    fishHealth -= currentConfig.skill3Damage;
-    updateGreenBarsDisplay();
-    updateFishHealthUI();
-    updateSkillButtons();
-    checkGameOver();
-    status.textContent = `${status.textContent.split('|')[0]} | 技能3！造成${currentConfig.skill3Damage}高额伤害`;
-}
-
-/**
- * 事件绑定（移动端优化）
- */
+// ===================== 事件 =====================
 function bindEvents() {
-    // 拖动事件（鼠标+触摸）
-    reelButton.addEventListener('mousedown', handleDragStart);
-    document.addEventListener('mousemove', handleDragMove);
-    document.addEventListener('mouseup', handleDragEnd);
-    document.addEventListener('mouseleave', handleDragEnd);
-    
-    reelButton.addEventListener('touchstart', handleDragStart, { passive: false });
-    document.addEventListener('touchmove', handleDragMove, { passive: false });
-    document.addEventListener('touchend', handleDragEnd);
-    document.addEventListener('touchcancel', handleDragEnd);
-    
-    // 按钮点击事件
-    resetButton.addEventListener('click', resetGame);
-    gameOverResetBtn.addEventListener('click', resetGame);
-    skill1Button.addEventListener('click', useSkill1);
-    skill2Button.addEventListener('click', useSkill2);
-    skill3Button.addEventListener('click', useSkill3);
-    normalFishBtn.addEventListener('click', () => switchFishMode(false));
-    bossFishBtn.addEventListener('click', () => switchFishMode(true));
-    
-    // 移动端触摸优化
-    skill1Button.addEventListener('touchstart', (e) => { e.preventDefault(); useSkill1(); }, { passive: false });
-    skill2Button.addEventListener('touchstart', (e) => { e.preventDefault(); useSkill2(); }, { passive: false });
-    skill3Button.addEventListener('touchstart', (e) => { e.preventDefault(); useSkill3(); }, { passive: false });
-    resetButton.addEventListener('touchstart', (e) => { e.preventDefault(); resetGame(); }, { passive: false });
-    normalFishBtn.addEventListener('touchstart', (e) => { e.preventDefault(); switchFishMode(false); }, { passive: false });
-    bossFishBtn.addEventListener('touchstart', (e) => { e.preventDefault(); switchFishMode(true); }, { passive: false });
-    gameOverResetBtn.addEventListener('touchstart', (e) => { e.preventDefault(); resetGame(); }, { passive: false });
+  reelButton.addEventListener('mousedown', handleDragStart);
+  document.addEventListener('mousemove', handleDragMove);
+  document.addEventListener('mouseup', handleDragEnd);
+  document.addEventListener('mouseleave', handleDragEnd);
+
+  reelButton.addEventListener('touchstart', handleDragStart, { passive: false });
+  document.addEventListener('touchmove', handleDragMove, { passive: false });
+  document.addEventListener('touchend', handleDragEnd);
+  document.addEventListener('touchcancel', handleDragEnd);
+
+  resetButton.addEventListener('click', resetGame);
+  gameOverResetBtn.addEventListener('click', resetGame);
+  skill1Button.addEventListener('click', useSkill1);
+  skill2Button.addEventListener('click', useSkill2);
+  skill3Button.addEventListener('click', useSkill3);
+  normalFishBtn.addEventListener('click', () => switchFishMode(false));
+  bossFishBtn.addEventListener('click', () => switchFishMode(true));
+
+  bindSkillLongPress();
 }
 
-/**
- * 游戏初始化
- */
 function initGame() {
-    // 初始化鱼方向
-    fishIcon.classList.remove('left');
-    initFishDirectionTimer();
-    
-    // 绑定事件
-    bindEvents();
-    
-    // 初始化判定区
-    targetZone.style.left = `${BASE_TARGET_START}%`;
-    targetZone.style.width = `${25}%`;
-    
-    // 启动水花特效
-    startFishSplashLoop();
-    
-    // 启动游戏循环
-    if (intervalId) clearInterval(intervalId);
-    intervalId = setInterval(loop, 60);
-    
-    // 初始UI更新
-    updateUI();
+  initFishDirectionTimer();
+  bindEvents();
+  startFishSplashLoop();
+  intervalId = setInterval(loop, 60);
+  updateUI();
 }
 
-// 页面加载完成后初始化
 document.addEventListener('DOMContentLoaded', initGame);

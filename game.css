@@ -796,3 +796,32 @@ body {
     width: 100%; 
     margin: 0 -8px;
 }
+
+/* ===================== 技能长按弹窗 ===================== */
+.skill-tooltip {
+  position: fixed;
+  background: rgba(0, 0, 0, 0.85);
+  color: #fff;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  line-height: 1.4;
+  white-space: pre-line;
+  z-index: 9999;
+  pointer-events: none;
+  max-width: 220px;
+  display: none;
+  text-align: left;
+  box-shadow: 0 0 10px rgba(0,0,0,0.3);
+}
+
+/* 新技能按钮文字自动换行、居中 */
+.skill-button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  line-height: 1.2;
+  padding: 4px;
+}
