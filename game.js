@@ -37,12 +37,14 @@ const directionText = document.getElementById('directionText'); // 移除playerI
 const gameOverScreen = document.getElementById('gameOverScreen');
 const gameOverText = document.getElementById('gameOverText');
 const gameOverResetBtn = document.getElementById('gameOverResetBtn');
+// 关键新增：获取水域区域DOM元素
+const waterSection = document.querySelector('.water-section');
 
 // ===================== 游戏配置（统一管理，避免硬编码） =====================
 const DEFAULT_CONFIG = {
-    playerStamina: 2000,
-    normalFishHealth: 3000,
-    bossFishHealth: 5000,
+    playerStamina: 1500,
+    normalFishHealth: 10000,
+    bossFishHealth: 20000,
     playerDamage: 10,
     fullHpMultiplier: 2,
     orangeMin: 2,          // 降低橙色条增长速度，适配移动端操作
@@ -57,11 +59,11 @@ const DEFAULT_CONFIG = {
     fishSlow: 4,           // 鱼掉血速度（非判定区）
     fishFast: 25,          // 鱼掉血速度（判定区）
     skill1Cost: 100,
-    skill1Damage: 50,
+    skill1Damage: 1000,
     skill2Cost: 100,
     skill2Heal: 200,
     skill3Cost: 300,
-    skill3Damage: 300,
+    skill3Damage: 4000,
     moveSpeedMin: 0.03,    // 降低BOSS判定区移动速度，适配移动端反应
     moveSpeedMax: 0.08,
     sizeSpeedMin: 0.01,
@@ -369,11 +371,13 @@ function createFishSplashParticle() {
     particle.style.animationDuration = `${duration}s`;
     
     // 根据鱼方向设置动画
-    if (fishDirection === 1) {
-        particle.style.animationName = 'fishSplashRight';
-    } else {
-        particle.style.animationName = 'fishSplashLeft';
-    }
+	if (fishDirection === 1) {
+    // 鱼朝右 → 尾巴在左 → 粒子向左飘（绑定left动画）
+    particle.style.animationName = 'fishSplashLeft';
+	} else {
+    // 鱼朝左 → 尾巴在右 → 粒子向右飘（绑定right动画）
+    particle.style.animationName = 'fishSplashRight';
+	}
     
     // 随机偏移，让粒子更自然
     particle.style.transform = `translate(${Math.random() * 10 - 5}px, ${Math.random() * 10 - 5}px) scale(0)`;
@@ -394,11 +398,10 @@ function startFishSplashLoop() {
     if (gameOver) return;
     
     splashTimer = setInterval(() => {
-        // 只有鱼在掉血时（橙色条在判定区）才生成水花
-        if (isInTargetZone()) {
-            for (let i = 0; i < currentConfig.splashParticleCount; i++) {
-                createFishSplashParticle();
-            }
+        // 核心修改：移除 isInTargetZone() 限制 → 一直生成水花粒子
+        // 仅保留 gameOver 判断，避免游戏结束后还生成
+        for (let i = 0; i < currentConfig.splashParticleCount; i++) {
+            createFishSplashParticle();
         }
     }, currentConfig.splashInterval);
 }
@@ -447,11 +450,26 @@ function getRandomChangeTime() {
     return Math.random() * (currentConfig.dirChangeMax - currentConfig.dirChangeMin) + currentConfig.dirChangeMin;
 }
 
-// ===================== BOSS阶段判断 =====================
+// ===================== BOSS阶段判断（新增背景切换逻辑） =====================
 function checkBossPhase2() {
-    if (!isBossMode) return false;
+    if (!isBossMode) {
+        // 非BOSS模式，移除第二阶段样式
+        if (waterSection) waterSection.classList.remove('boss-phase2');
+        return false;
+    }
+    
     const currentHpPercent = (fishHealth / fishHealthMax) * 100;
     const isPhase2 = currentHpPercent <= currentConfig.bossPhase2Hp;
+    
+    // 核心新增：切换水域背景样式
+    if (waterSection) {
+        if (isPhase2) {
+            waterSection.classList.add('boss-phase2');
+        } else {
+            waterSection.classList.remove('boss-phase2');
+        }
+    }
+    
     if (isPhase2 && !isBossPhase2) {
         BOSS_TARGET_MIN_LEFT = currentConfig.phase2MinLeft;
         BOSS_TARGET_MAX_LEFT = currentConfig.phase2MaxLeft;
@@ -462,6 +480,7 @@ function checkBossPhase2() {
         status.textContent = `${isBossMode ? '[BOSS模式-第二阶段] ' : ''}BOSS进入狂暴状态！判定区变化更快、范围更大！`;
         status.style.color = '#d81b60';
     }
+    
     isBossPhase2 = isPhase2;
     return isPhase2;
 }
@@ -628,6 +647,8 @@ function checkGameOver() {
         gameOver = true;
         endBulletTime();
         stopFishSplashLoop(); // 停止水花特效
+        // 游戏结束时恢复水域默认背景
+        if (waterSection) waterSection.classList.remove('boss-phase2');
         clearTimeout(fishDirectionTimer);
         reelButton.classList.remove('correct-direction');
         status.classList.remove('correct', 'wrong');
@@ -640,6 +661,8 @@ function checkGameOver() {
         gameOver = true;
         endBulletTime();
         stopFishSplashLoop(); // 停止水花特效
+        // 游戏结束时恢复水域默认背景
+        if (waterSection) waterSection.classList.remove('boss-phase2');
         clearTimeout(fishDirectionTimer);
         reelButton.classList.remove('correct-direction');
         status.classList.remove('correct', 'wrong');
@@ -752,6 +775,8 @@ function switchFishMode(isBoss) {
     isBossMode = isBoss;
     currentFishType = isBoss ? 'boss' : 'normal';
     isBossPhase2 = false;
+    // 切换鱼模式时恢复水域默认背景
+    if (waterSection) waterSection.classList.remove('boss-phase2');
     normalFishBtn.classList.toggle('active', !isBoss);
     bossFishBtn.classList.toggle('active', isBoss);
     
@@ -802,6 +827,9 @@ function resetGame() {
     lastFullBars = 0;
     dragDirection = 0;
     playerDirection = 1;
+    
+    // 重置时恢复水域默认背景
+    if (waterSection) waterSection.classList.remove('boss-phase2');
     
     // 计时器清空
     clearTimeout(bulletTimeTimer);
