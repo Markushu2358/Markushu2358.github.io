@@ -366,6 +366,7 @@ body {
     height: 60px;
     background: url("https://img.icons8.com/fluency/96/000000/fish.png") center/contain no-repeat;
     transition: transform 0.5s ease;
+    position: relative; /* 为水花特效定位做准备 */
 }
 
 .fish-icon.left { transform: scaleX(-1); }
@@ -383,7 +384,7 @@ body {
     z-index: 3;
 }
 
-/* 玩家朝向区域：缩小尺寸，适配屏幕 */
+/* 玩家朝向区域：移除icon后优化样式，标签和文字同行居中 */
 .player-direction-section {
     width: 100%;
     display: flex;
@@ -396,7 +397,7 @@ body {
 .direction-display {
     display: flex;
     align-items: center;
-    gap: 4px;
+    gap: 8px; /* 增加间距更美观 */
     padding: 8px 15px;
     background: white;
     border-radius: 8px;
@@ -405,15 +406,16 @@ body {
     justify-content: center;
 }
 
-.direction-label { font-size: 16px; font-weight: bold; color: #333; }
-.player-icon {
-    width: 0px;
-    height: 0px;
-    background: url("https://img.icons8.com/fluency/96/000000/person-fishing.png") center/contain no-repeat;
-    transition: transform 0.3s ease;
+.direction-label { 
+    font-size: 16px; 
+    font-weight: bold; 
+    color: #333; 
 }
-.player-icon.left { transform: scaleX(-1); }
-.direction-text { font-size: 14px; font-weight: bold; color: #2196f3; }
+.direction-text { 
+    font-size: 16px; /* 放大文字，和标签一致 */
+    font-weight: bold; 
+    color: #2196f3; 
+}
 
 /* 底部区域：自适应高度，不溢出 */
 .bottom-section {
@@ -423,43 +425,42 @@ body {
     flex-shrink: 0;        
 }
 
-/* 重构按钮布局：收线按钮居中，技能1/3分上下 */
+/* 重构按钮布局：核心修改部分 */
 .button-container {
     display: flex;
     flex-direction: column;
     align-items: center;
     gap: 10px;
     margin-bottom: 8px;
-}
-
-/* 收线按钮行：单独一行居中 */
-.reel-button-row {
-    display: flex;
-    justify-content: center;
     width: 100%;
 }
 
-/* 技能按钮行：技能1/3并排，技能2单独一行 */
-.skill-buttons-row-1 {
+/* 收线+技能1/3 横向布局：核心样式 */
+.reel-skill-row {
     display: flex;
+    align-items: center;
     justify-content: space-between;
     width: 100%;
-    gap: 8px;
+    gap: 8px; /* 按钮间间距 */
 }
 
-.skill-buttons-row-2 {
+/* 技能1/3样式：高度和收线按钮一致，宽度平分剩余空间 */
+.reel-skill-row .skill1-button,
+.reel-skill-row .skill3-button {
+    flex: 1; /* 平分剩余宽度，占满屏幕 */
+    height: 120px; /* 和收线按钮高度一致 */
+    padding: 0;
+    font-size: 14px;
+    border-radius: 8px;
     display: flex;
+    align-items: center;
     justify-content: center;
-    width: 100%;
+    text-align: center;
+    white-space: normal; /* 允许换行 */
+    line-height: 1.2;
 }
 
-.reset-button-row {
-    display: flex;
-    justify-content: center;
-    width: 100%;
-}
-
-/* 收线按钮：保持原有尺寸 */
+/* 收线按钮：保持原有尺寸，居中 */
 .reel-button {
     width: 120px;
     height: 120px;
@@ -479,6 +480,7 @@ body {
     position: relative;
     touch-action: none;
     box-shadow: 0 3px 10px rgba(33, 150, 243, 0.3);
+    flex-shrink: 0; /* 防止收线按钮被压缩 */
 }
 
 .reel-button.correct-direction {
@@ -499,7 +501,35 @@ body {
 
 .reel-button.dragging { background: #1565c0; }
 
-/* 按钮通用样式：技能按钮改为正方形，减少横向占用 */
+/* 技能2行样式：宽度比收线略宽，高度更高 */
+.skill2-row {
+    width: 100%;
+    display: flex;
+    justify-content: center;
+}
+
+.skill2-row .skill2-button {
+    width: calc(120px + 40px); /* 比收线按钮宽40px */
+    height: 80px; /* 更高的高度 */
+    padding: 0 15px;
+    font-size: 14px;
+    border-radius: 8px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    white-space: normal;
+    line-height: 1.2;
+}
+
+/* 重置按钮行 */
+.reset-button-row {
+    display: flex;
+    justify-content: center;
+    width: 100%;
+}
+
+/* 按钮通用样式调整 */
 .reset-button {
     padding: 12px 0;
     font-size: 16px;
@@ -520,26 +550,17 @@ body {
     transform: scale(0.96);
 }
 
-/* 技能按钮：改为正方形/等宽按钮，缩小字体，减少横向占用 */
+/* 技能按钮基础样式（覆盖原有样式） */
 .skill-button {
-    padding: 12px 0;
-    font-size: 12px;
-    font-weight: bold;
     color: white;
     border: none;
-    border-radius: 6px;
     cursor: pointer;
     transition: background 0.2s, transform 0.1s;
     user-select: none;
-    flex: 1;
-    min-width: 0; /* 移除最小宽度限制 */
     box-shadow: 0 2px 6px rgba(0,0,0,0.1);
-    text-align: center;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
 }
 
+/* 技能按钮颜色区分 */
 .skill1-button { background: #4caf50; }
 .skill1-button:hover, .skill1-button:active { background: #388e3c; transform: scale(0.96); }
 .skill1-button:disabled { background: #9e9e9e; cursor: not-allowed; transform: none; box-shadow: none; }
@@ -643,6 +664,58 @@ body {
 /* 自定义属性兼容 */
 :root { --health-deg: 360deg; }
 
+/* 鱼水花特效容器和粒子样式 */
+.fish-splash-container {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    z-index: 9998; /* 低于能量粒子，高于游戏内容 */
+    overflow: visible;
+}
+
+.fish-splash-particle {
+    position: absolute;
+    width: 6px;
+    height: 6px;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 50%;
+    opacity: 0;
+    z-index: 9998;
+}
+
+@keyframes fishSplashLeft {
+    0% { 
+        transform: translate(0, 0) scale(0); 
+        opacity: 1; 
+    }
+    50% { 
+        transform: translate(-50px, 10px) scale(1.2); 
+        opacity: 0.8; 
+    }
+    100% { 
+        transform: translate(-150px, 20px) scale(0); 
+        opacity: 0; 
+    }
+}
+
+@keyframes fishSplashRight {
+    0% { 
+        transform: translate(0, 0) scale(0); 
+        opacity: 1; 
+    }
+    50% { 
+        transform: translate(50px, 10px) scale(1.2); 
+        opacity: 0.8; 
+    }
+    100% { 
+        transform: translate(150px, 20px) scale(0); 
+        opacity: 0; 
+    }
+}
+
 /* 移动端专属适配（覆盖所有尺寸） */
 @media (max-width: 768px) {
     .main-wrapper { gap: 6px; padding: 6px; }
@@ -653,17 +726,31 @@ body {
     .fish-health-container { width: 120px; height: 120px; }
     .fish-icon { width: 50px; height: 50px; }
     
+    /* 按钮适配小屏 */
+    .reel-button { width: 100px; height: 100px; font-size: 18px; }
+    .reel-skill-row .skill1-button,
+    .reel-skill-row .skill3-button { height: 100px; font-size: 12px; }
+    .skill2-row .skill2-button { 
+        width: calc(100px + 30px); 
+        height: 70px; 
+        font-size: 12px; 
+    }
+    
     /* 状态文字进一步放大 */
     .status { font-size: 14px; }
     .water-section .status { font-size: 15px; }
-    
-    /* 技能按钮字体更小，适配极小屏 */
-    .skill-button { font-size: 11px; padding: 10px 0; }
 }
 
 /* 极小屏幕（如iPhone SE/小安卓机） */
 @media (max-width: 375px) {
-    .reel-button { width: 100px; height: 100px; font-size: 18px; }
+    .reel-button { width: 80px; height: 80px; font-size: 16px; }
+    .reel-skill-row .skill1-button,
+    .reel-skill-row .skill3-button { height: 80px; font-size: 11px; }
+    .skill2-row .skill2-button { 
+        width: calc(80px + 20px); 
+        height: 60px; 
+        font-size: 11px; 
+    }
     .fish-health-container { width: 100px; height: 100px; }
     .fish-icon { width: 40px; height: 40px; }
     .top-bar { height: 40px; }
@@ -674,6 +761,7 @@ body {
     .water-section .status { font-size: 14px; }
 }
 
+/* 移动端触摸优化 */
 .skill-button, .reset-button, .fish-select-button {
     touch-action: manipulation; /* 允许点击、轻扫等操作，禁用缩放 */
 }

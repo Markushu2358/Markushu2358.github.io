@@ -1,6 +1,7 @@
 // ===================== 全局DOM元素获取（只获取一次，避免重复） =====================
 const orangeFill = document.getElementById('orangeFill');
 const particleContainer = document.getElementById('particleContainer');
+const fishSplashContainer = document.getElementById('fishSplashContainer'); // 新增水花容器
 const targetZone = document.getElementById('targetZone');
 const fishHealthFill = document.getElementById('fishHealthFill');
 const fishHealthText = document.getElementById('fishHealthText');
@@ -11,7 +12,6 @@ const greenFills = [
     document.getElementById('greenFill2'),
     document.getElementById('greenFill3')
 ];
-// 新增：获取能量条文字元素
 const greenBarTexts = [
     document.getElementById('greenBarText1'),
     document.getElementById('greenBarText2'),
@@ -33,8 +33,7 @@ const playerStaminaText = document.getElementById('playerStaminaText');
 const normalFishBtn = document.getElementById('normalFishBtn');
 const bossFishBtn = document.getElementById('bossFishBtn');
 const bulletTimeNotice = document.getElementById('bulletTimeNotice');
-const playerIcon = document.getElementById('playerIcon');
-const directionText = document.getElementById('directionText');
+const directionText = document.getElementById('directionText'); // 移除playerIcon后只保留方向文字
 const gameOverScreen = document.getElementById('gameOverScreen');
 const gameOverText = document.getElementById('gameOverText');
 const gameOverResetBtn = document.getElementById('gameOverResetBtn');
@@ -55,8 +54,8 @@ const DEFAULT_CONFIG = {
     greenFast: 1.5,
     barCapacity: 100,
     maxEnergy: 300,
-    fishSlow: 4,
-    fishFast: 25,
+    fishSlow: 4,           // 鱼掉血速度（非判定区）
+    fishFast: 25,          // 鱼掉血速度（判定区）
     skill1Cost: 100,
     skill1Damage: 50,
     skill2Cost: 100,
@@ -86,7 +85,10 @@ const DEFAULT_CONFIG = {
     playerSlowDownRate: 0.5,
     playerNormalDownRate: 1.0,
     fishPullSpeedNormal: 2,// 普通鱼拉力速度
-    fishPullSpeedBoss: 3   // BOSS鱼拉力速度
+    fishPullSpeedBoss: 3,  // BOSS鱼拉力速度
+    // 新增水花特效配置
+    splashParticleCount: 5, // 每次生成的水花粒子数量
+    splashInterval: 300     // 水花生成间隔（ms）
 };
 
 // ===================== 全局状态变量（统一初始化，避免重复定义） =====================
@@ -121,6 +123,7 @@ let dragStartX = 0;
 let dragDirection = 0;
 let playerDirection = 1; // 1=右，-1=左
 let currentFishType = 'normal'; // normal/boss
+let splashTimer = null; // 水花特效定时器
 
 // ===================== 基础常量（统一定义） =====================
 const BASE_TARGET_START = 60;
@@ -133,13 +136,7 @@ let BOSS_TARGET_MAX_WIDTH = 25;
 
 // ===================== 玩家朝向核心功能 =====================
 function updatePlayerDirectionDisplay() {
-    if (playerDirection === 1) {
-        playerIcon.classList.remove('left');
-        directionText.textContent = '朝右';
-    } else {
-        playerIcon.classList.add('left');
-        directionText.textContent = '朝左';
-    }
+    directionText.textContent = playerDirection === 1 ? '朝右' : '朝左';
 }
 
 function setPlayerDirection(direction) {
@@ -247,7 +244,7 @@ function pullToCenter() {
     }
 }
 
-// ===================== 粒子特效（修复：起点=橙色条末端，终点=能量条末端） =====================
+// ===================== 能量粒子特效 =====================
 /**
  * 获取粒子起点：橙色拉力条当前进度的末端位置（绝对坐标）
  */
@@ -259,7 +256,6 @@ function getParticleStartPosition() {
     return { x: startX, y: startY };
 }
 
-// ===================== 粒子特效（修复：终点=能量条当前进度末端） =====================
 /**
  * 获取粒子终点：对应能量条的当前进度末端位置（绝对坐标）
  * - 不到1格：第一个能量条当前进度的末端
@@ -279,6 +275,7 @@ function getParticleTargetPosition() {
     const targetY = barRect.top + barRect.height / 2; // 能量条垂直居中
     return { x: targetX, y: targetY };
 }
+
 function createParticle() {
     if (!isInTargetZone() || gameOver) return;
     
@@ -327,6 +324,92 @@ function particleLoop() {
             createParticle();
         }
     }
+}
+
+// ===================== 鱼水花特效（新增核心功能） =====================
+/**
+ * 获取鱼尾巴的位置（绝对坐标）
+ */
+function getFishTailPosition() {
+    const fishIconRect = fishIcon.getBoundingClientRect();
+    let tailX, tailY;
+    
+    if (fishDirection === 1) { // 鱼朝右，尾巴在左侧
+        tailX = fishIconRect.left - 10; // 尾巴在鱼图标左侧10px
+        tailY = fishIconRect.top + fishIconRect.height / 2;
+    } else { // 鱼朝左，尾巴在右侧
+        tailX = fishIconRect.right + 10; // 尾巴在鱼图标右侧10px
+        tailY = fishIconRect.top + fishIconRect.height / 2;
+    }
+    
+    return { x: tailX, y: tailY };
+}
+
+/**
+ * 创建鱼水花粒子
+ */
+function createFishSplashParticle() {
+    if (gameOver) return;
+    
+    const tailPos = getFishTailPosition();
+    const particle = document.createElement('div');
+    particle.classList.add('fish-splash-particle');
+    
+    // 设置粒子起始位置（鱼尾巴位置）
+    particle.style.left = `${tailPos.x}px`;
+    particle.style.top = `${tailPos.y}px`;
+    
+    // 随机粒子尺寸（4-8px）
+    const size = Math.random() * 4 + 4;
+    particle.style.width = `${size}px`;
+    particle.style.height = `${size}px`;
+    
+    // 随机动画时长（0.8-1.5s）
+    const duration = Math.random() * 0.7 + 0.8;
+    particle.style.animationDuration = `${duration}s`;
+    
+    // 根据鱼方向设置动画
+    if (fishDirection === 1) {
+        particle.style.animationName = 'fishSplashRight';
+    } else {
+        particle.style.animationName = 'fishSplashLeft';
+    }
+    
+    // 随机偏移，让粒子更自然
+    particle.style.transform = `translate(${Math.random() * 10 - 5}px, ${Math.random() * 10 - 5}px) scale(0)`;
+    
+    fishSplashContainer.appendChild(particle);
+    
+    // 动画结束后移除粒子
+    setTimeout(() => {
+        particle.remove();
+    }, duration * 1000);
+}
+
+/**
+ * 启动鱼水花特效循环
+ */
+function startFishSplashLoop() {
+    clearInterval(splashTimer);
+    if (gameOver) return;
+    
+    splashTimer = setInterval(() => {
+        // 只有鱼在掉血时（橙色条在判定区）才生成水花
+        if (isInTargetZone()) {
+            for (let i = 0; i < currentConfig.splashParticleCount; i++) {
+                createFishSplashParticle();
+            }
+        }
+    }, currentConfig.splashInterval);
+}
+
+/**
+ * 停止鱼水花特效
+ */
+function stopFishSplashLoop() {
+    clearInterval(splashTimer);
+    // 清空剩余的水花粒子
+    fishSplashContainer.innerHTML = '';
 }
 
 // ===================== 核心数值计算 =====================
@@ -455,7 +538,7 @@ function isInTargetZone() {
     return orangeProgress >= targetStart && orangeProgress < targetEnd;
 }
 
-// ===================== 能量条更新（修复：显示进度文字 + 横向条用width） =====================
+// ===================== 能量条更新 =====================
 function updateGreenBarsDisplay() {
     let remainingEnergy = totalGreenEnergy;
     const currentFullBars = getAvailableFullBars();
@@ -544,6 +627,7 @@ function checkGameOver() {
     if (fishHealth <= 0) {
         gameOver = true;
         endBulletTime();
+        stopFishSplashLoop(); // 停止水花特效
         clearTimeout(fishDirectionTimer);
         reelButton.classList.remove('correct-direction');
         status.classList.remove('correct', 'wrong');
@@ -555,6 +639,7 @@ function checkGameOver() {
     } else if (playerStamina <= 0) {
         gameOver = true;
         endBulletTime();
+        stopFishSplashLoop(); // 停止水花特效
         clearTimeout(fishDirectionTimer);
         reelButton.classList.remove('correct-direction');
         status.classList.remove('correct', 'wrong');
@@ -621,25 +706,18 @@ function updateUI() {
     checkGameOver();
 }
 
-// ===================== 主游戏循环 =====================
+// ===================== 主游戏循环（核心机制修改：鱼掉血逻辑） =====================
 function loop() {
     if (gameOver) return;
+    
+    // 1. 处理橙色条增减
     if (isHolding) {
         const randomInc = getRandomOrangeValue();
         orangeProgress += randomInc;
-        const inTargetZone = isInTargetZone();
-        fishHealth -= inTargetZone ? currentConfig.fishFast : currentConfig.fishSlow;
-        if (!inTargetZone) {
-            const damageMultiplier = orangeProgress >= 100 ? currentConfig.fullHpMultiplier : 1;
-            const directionPenalty = (dragDirection !== 0 && !isDragDirectionCorrect()) ? 1.5 : 1;
-            playerStamina -= PLAYER_DAMAGE * damageMultiplier * directionPenalty;
-        }
     } else {
         let randomDec;
         if (isBulletTime) {
             randomDec = currentConfig.bulletTimeDec;
-            const inTargetZone = isInTargetZone();
-            fishHealth -= inTargetZone ? currentConfig.fishFast : currentConfig.fishSlow;
         } else {
             const inTargetZone = isInTargetZone();
             randomDec = inTargetZone ? getSlowOrangeDecValue() : getRandomOrangeValue();
@@ -647,6 +725,25 @@ function loop() {
         }
         orangeProgress -= randomDec;
     }
+
+    // 2. 鱼掉血逻辑修改：只要在黄色判定区，鱼就掉血（无论是否收线）
+    const inTargetZone = isInTargetZone();
+    if (inTargetZone) {
+        // 在判定区，鱼持续掉血（fast速度）
+        fishHealth -= currentConfig.fishFast * (isBulletTime ? 1.5 : 1); // 子弹时间掉血翻倍
+    } else if (isHolding && !inTargetZone) {
+        // 不在判定区但收线，鱼少量掉血（slow速度）
+        fishHealth -= currentConfig.fishSlow;
+    }
+
+    // 3. 玩家耐力消耗逻辑（保持不变）
+    if (isHolding && !inTargetZone) {
+        const damageMultiplier = orangeProgress >= 100 ? currentConfig.fullHpMultiplier : 1;
+        const directionPenalty = (dragDirection !== 0 && !isDragDirectionCorrect()) ? 1.5 : 1;
+        playerStamina -= PLAYER_DAMAGE * damageMultiplier * directionPenalty;
+    }
+
+    // 4. 更新UI和特效
     updateUI();
 }
 
@@ -711,6 +808,7 @@ function resetGame() {
     clearTimeout(fishDirectionTimer);
     clearTimeout(directionChangeTimer);
     clearTimeout(sizeChangeTimer);
+    stopFishSplashLoop(); // 停止旧的水花循环
     
     // UI重置
     orangeFill.classList.remove('bullet-time', 'full-warning');
@@ -720,6 +818,7 @@ function resetGame() {
     fishIcon.classList.toggle('left', fishDirection === -1);
     updatePlayerDirectionDisplay();
     particleContainer.innerHTML = '';
+    fishSplashContainer.innerHTML = ''; // 清空水花粒子
     
     // 能量条重置（包含文字）
     greenFills.forEach((fill, index) => {
@@ -744,6 +843,7 @@ function resetGame() {
     
     // 重新初始化定时器
     initFishDirectionTimer();
+    startFishSplashLoop(); // 启动水花特效循环
     if (intervalId) clearInterval(intervalId);
     intervalId = setInterval(loop, 60);
     
@@ -841,6 +941,7 @@ function bindEvents() {
         }, { passive: false });
     }
 }
+
 // ===================== 初始化游戏 =====================
 function initGame() {
     // 初始化鱼方向
@@ -854,6 +955,9 @@ function initGame() {
     // 初始化判定区
     targetZone.style.left = `${BASE_TARGET_START}%`;
     targetZone.style.width = `${25}%`;
+    
+    // 启动水花特效循环
+    startFishSplashLoop();
     
     // 启动游戏循环
     if (intervalId) clearInterval(intervalId);
