@@ -783,3 +783,15 @@ body {
     width: 100%; 
     /* 负边距抵消边缘间隙，让拉力条完全占满 */
     margin: 0 -8px;
+
+/* 能量满时拉力条金色样式 */
+.orange-fill.energy-full {
+    background: linear-gradient(90deg, #ffd700, #ffc107, #ffd700) !important;
+    box-shadow: 0 0 20px rgba(255, 215, 0, 0.9) !important;
+    animation: goldPulse 0.8s infinite alternate !important;
+}
+
+@keyframes goldPulse {
+    from { transform: translateY(-50%) scaleX(1); }
+    to { transform: translateY(-50%) scaleX(1.03); }
+}

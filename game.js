@@ -609,6 +609,12 @@ function updateGreenBarsDisplay() {
     }
 }
 
+// ===================== 新增：能量满判断函数 =====================
+function isEnergyFull() {
+    // 总能量达到最大值（300）即为满
+    return totalGreenEnergy >= currentConfig.maxEnergy;
+}
+
 function getAvailableFullBars() {
     return Math.floor(totalGreenEnergy / currentConfig.barCapacity);
 }
@@ -682,10 +688,19 @@ function updateUI() {
     orangeFill.style.width = `${orangeProgress}%`;
     orangeFill.style.display = 'block';
     
-    if (orangeProgress >= 100) {
-        orangeFill.classList.add('full-warning');
+    // 【新增】能量满时，拉力条添加金色样式；否则移除
+    if (isEnergyFull()) {
+        orangeFill.classList.add('energy-full');
+        // 移除原有警告/子弹时间样式，优先显示金色
+        orangeFill.classList.remove('full-warning', 'bullet-time');
     } else {
-        orangeFill.classList.remove('full-warning');
+        orangeFill.classList.remove('energy-full');
+        // 原有逻辑保留
+        if (orangeProgress >= 100) {
+            orangeFill.classList.add('full-warning');
+        } else {
+            orangeFill.classList.remove('full-warning');
+        }
     }
 
     if (isBossMode) {
@@ -710,8 +725,12 @@ function updateUI() {
         let statusText, statusColor;
         const targetStart = isBossMode ? targetZoneLeft : BASE_TARGET_START;
         const targetEnd = isBossMode ? (targetZoneLeft + targetZoneWidth) : BASE_TARGET_END;
-        // 放大状态文字内容的字号（通过CSS实现，这里保证内容完整）
-        if (orangeProgress >= 100) {
+        
+        // 【新增】能量满的状态提示
+        if (isEnergyFull()) {
+            statusText = `${isBossMode ? (isBossPhase2 ? '[BOSS模式-第二阶段] ' : '[BOSS模式] ') : ''}[能量已满🔥] 鱼持续掉血（1.5倍伤害）| 橙色: ${Math.round(orangeProgress)}% | 总能量: ${Math.round(totalGreenEnergy)}/${currentConfig.maxEnergy}`;
+            statusColor = '#ffd700'; // 金色文字
+        } else if (orangeProgress >= 100) {
             statusText = `${isBossMode ? (isBossPhase2 ? '[BOSS模式-第二阶段] ' : '[BOSS模式] ') : ''}[警告！] 橙色条已满！耐力掉血翻倍 | 黄色区: ${Math.round(targetStart)}%-${Math.round(targetEnd)}% | 总能量: ${Math.round(totalGreenEnergy)}/${currentConfig.maxEnergy}`;
             statusColor = '#dc3545';
         } else if (inTargetZone) {
@@ -728,7 +747,6 @@ function updateUI() {
     updateSkillButtons();
     checkGameOver();
 }
-
 // ===================== 主游戏循环（核心机制修改：鱼掉血逻辑） =====================
 function loop() {
     if (gameOver) return;
@@ -749,11 +767,17 @@ function loop() {
         orangeProgress -= randomDec;
     }
 
-    // 2. 鱼掉血逻辑修改：只要在黄色判定区，鱼就掉血（无论是否收线）
+    // 2. 鱼掉血逻辑【核心修改】：优先处理能量满的情况
     const inTargetZone = isInTargetZone();
-    if (inTargetZone) {
+    // 能量满时：掉血 = 金色区域速度 × 1.5 × 子弹时间倍率
+    if (isEnergyFull()) {
+        const bloodLoss = currentConfig.fishFast * 1.5 * (isBulletTime ? 1.5 : 1);
+        fishHealth -= bloodLoss;
+    } 
+    // 能量未满时：保留原有逻辑
+    else if (inTargetZone) {
         // 在判定区，鱼持续掉血（fast速度）
-        fishHealth -= currentConfig.fishFast * (isBulletTime ? 1.5 : 1); // 子弹时间掉血翻倍
+        fishHealth -= currentConfig.fishFast * (isBulletTime ? 1.5 : 1);
     } else if (isHolding && !inTargetZone) {
         // 不在判定区但收线，鱼少量掉血（slow速度）
         fishHealth -= currentConfig.fishSlow;
@@ -769,7 +793,6 @@ function loop() {
     // 4. 更新UI和特效
     updateUI();
 }
-
 // ===================== 鱼模式切换（整合逻辑，避免冲突） =====================
 function switchFishMode(isBoss) {
     isBossMode = isBoss;
@@ -838,8 +861,8 @@ function resetGame() {
     clearTimeout(sizeChangeTimer);
     stopFishSplashLoop(); // 停止旧的水花循环
     
-    // UI重置
-    orangeFill.classList.remove('bullet-time', 'full-warning');
+    // UI重置【新增】：移除能量满的金色样式
+    orangeFill.classList.remove('bullet-time', 'full-warning', 'energy-full');
     bulletTimeNotice.classList.remove('show');
     orangeFill.style.width = '0%';
     reelButton.classList.remove('dragging', 'correct-direction');
@@ -878,7 +901,6 @@ function resetGame() {
     // 更新UI
     updateUI();
 }
-
 // ===================== 技能功能 =====================
 function useSkill1() {
     if (gameOver || getAvailableFullBars() < (currentConfig.skill1Cost / currentConfig.barCapacity)) return;
