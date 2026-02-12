@@ -50,8 +50,8 @@ const DEFAULT_CONFIG = {
     orangeMin: 2,          // 降低橙色条增长速度，适配移动端操作
     orangeMax: 8,
     orangeSlowMin: 1,
-    orangeSlowMax: 1,
-    bulletTimeDec: 2,
+    orangeSlowMax: 4,
+    bulletTimeDec: 1,
     greenSlow: 0.03,       // 降低能量增长，减少粒子数量
     greenFast: 1.5,
     barCapacity: 100,
@@ -77,7 +77,7 @@ const DEFAULT_CONFIG = {
     phase2MaxLeft: 95,
     phase2MinWidth: 5,
     phase2MaxWidth: 50,
-    bulletTimeDur: 1000,
+    bulletTimeDur: 2000,
     fishDirChangeMin: 2500,// 延长鱼方向切换时间，适配移动端操作
     fishDirChangeMax: 4500,
     correctDirectionBonus: 0.4,
