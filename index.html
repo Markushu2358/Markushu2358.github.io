@@ -37,17 +37,14 @@
                 <div class="green-bar-horizontal">
                     <div class="green-fill-horizontal" id="greenFill1"></div>
                     <div class="green-effect-horizontal" id="greenEffect1"></div>
-                    <div class="green-bar-text" id="greenBarText1">0/100</div>
                 </div>
                 <div class="green-bar-horizontal">
                     <div class="green-fill-horizontal" id="greenFill2"></div>
                     <div class="green-effect-horizontal" id="greenEffect2"></div>
-                    <div class="green-bar-text" id="greenBarText2">0/100</div>
                 </div>
                 <div class="green-bar-horizontal">
                     <div class="green-fill-horizontal" id="greenFill3"></div>
                     <div class="green-effect-horizontal" id="greenEffect3"></div>
-                    <div class="green-bar-text" id="greenBarText3">0/100</div>
                 </div>
             </div>
         </div>
@@ -56,7 +53,15 @@
         <div class="water-section">
             <div class="water-wave"></div>
             <div class="water-wave"></div>
-            
+           
+    
+            <!-- 新增：刺鱼力度条（默认隐藏） -->
+            <div class="stab-bar-section" id="stabBarSection">
+                <div class="stab-bar-red"></div>
+                <div class="stab-bar-green"></div>
+                <div class="stab-cursor" id="stabCursor"></div>
+            </div>
+
             <!-- 拉力条区域 -->
             <div class="pull-bar-section">
                 <div class="top-bar">
@@ -79,15 +84,7 @@
             </div>
             
             <!-- 游戏状态提示 -->
-            <div class="status" id="status">按住并拖动收线按钮（往鱼反方向）| 黄色判定区：60%（含）-85%（不含） | 总能量：0/300</div>
-        </div>
-
-        <!-- 玩家朝向提示 -->
-        <div class="player-direction-section">
-            <div class="direction-display">
-                <div class="direction-label">玩家朝向：</div>
-                <div class="direction-text" id="directionText">朝右</div>
-            </div>
+            <div class="status" id="status">按住收线按钮 | 黄色判定区：60%（含）-85%（不含） | 总能量：0/300</div>
         </div>
 
         <!-- 底部操作区：按钮集合 -->
@@ -97,9 +94,7 @@
                 <div class="reel-skill-row">
                     <button class="skill-button skill1-button" id="skill1Button" disabled>技能1 (1能量)</button>
                     <button class="reel-button" id="reelButton">
-                        <span>&lt;</span>
                         <span>收线</span>
-                        <span>&gt;</span>
                     </button>
                     <button class="skill-button skill3-button" id="skill3Button" disabled>技能3 (3能量)</button>
                 </div>
@@ -125,7 +120,6 @@
 
     <!-- 特效容器（全局浮层，最高层级） -->
     <div class="particle-container" id="particleContainer"></div>
-    <div class="fish-splash-container" id="fishSplashContainer"></div>
 
     <script src="game.js"></script>
 </body>

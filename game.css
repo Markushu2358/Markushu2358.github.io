@@ -1,4 +1,3 @@
-/* ===================== 基础重置与全局样式 ===================== */
 * {
     margin: 0;
     padding: 0;
@@ -118,18 +117,6 @@ body {
     position: relative;
 }
 
-/* 能量条进度文字 */
-.green-bar-text {
-    position: absolute;
-    top: 50%;
-    left: 50%;
-    transform: translate(-50%, -50%);
-    color: white;
-    font-weight: bold;
-    font-size: 12px;
-    text-shadow: 0 1px 2px rgba(0,0,0,0.5);
-    z-index: 1;
-}
 
 .green-fill-horizontal {
     position: absolute;
@@ -356,8 +343,6 @@ body {
     position: relative;
 }
 
-.fish-icon.left { transform: scaleX(-1); }
-
 .fish-health-text {
     position: absolute;
     bottom: -15px;
@@ -368,39 +353,6 @@ body {
     font-weight: bold;
     font-size: 14px;
     z-index: 3;
-}
-
-/* ===================== 玩家朝向样式 ===================== */
-.player-direction-section {
-    width: 100%;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    margin-bottom: 4px;
-    flex-shrink: 0;
-}
-
-.direction-display {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    padding: 8px 15px;
-    background: white;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-    width: 100%;
-    justify-content: center;
-}
-
-.direction-label { 
-    font-size: 16px; 
-    font-weight: bold; 
-    color: #333; 
-}
-.direction-text { 
-    font-size: 16px;
-    font-weight: bold; 
-    color: #2196f3; 
 }
 
 /* ===================== 底部按钮区域 ===================== */
@@ -424,7 +376,7 @@ body {
 .reel-skill-row {
     display: flex;
     align-items: center;
-    justify-content: space-between;
+    justify-content: center;
     width: 100%;
     gap: 8px;
 }
@@ -461,6 +413,7 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
+align-items: center;
     gap: 6px;
     position: relative;
     touch-action: none;
@@ -468,24 +421,12 @@ body {
     flex-shrink: 0;
 }
 
-/* 收线按钮正确方向样式 */
-.reel-button.correct-direction {
-    background: linear-gradient(135deg, #4CAF50, #8BC34A);
-    box-shadow: 0 0 20px rgba(76, 175, 80, 0.8);
-    animation: correctPulse 0.6s infinite alternate;
-}
-
-@keyframes correctPulse {
-    from { transform: scale(1); }
-    to { transform: scale(1.05); }
-}
-
 .reel-button:hover, .reel-button:active {
     background: #1565c0;
     transform: scale(0.96);
 }
 
-.reel-button.dragging { background: #1565c0; }
+.reel-button.holding { background: #1565c0; }
 
 /* 技能2按钮行 */
 .skill2-row {
@@ -582,18 +523,6 @@ body {
     font-size: 16px;
 }
 
-.status.correct {
-    background: rgba(76, 175, 80, 0.2);
-    color: #2E7D32;
-    font-weight: bold;
-}
-
-.status.wrong {
-    background: rgba(244, 67, 54, 0.2);
-    color: #C62828;
-    font-weight: bold;
-}
-
 /* 子弹时间提示 */
 .bullet-time-notice {
     position: fixed;
@@ -681,62 +610,6 @@ body {
     100% { transform: translate(calc(var(--target-x) * 1px), calc(var(--target-y) * 1px)) scale(0); opacity: 0; }
 }
 
-/* 鱼水花特效容器 */
-.fish-splash-container {
-    position: fixed;
-    top: 0;
-    left: 0;
-    width: 130vw;
-    height: 130vh;
-    pointer-events: none;
-    z-index: 9998;
-    overflow: visible;
-}
-
-.fish-splash-particle {
-    position: absolute;
-    width: 15px;
-    height: 15px;
-    background: #2196f3;
-    border-style:solid;
-    border-width:2px;
-    border-color: white;
-    border-radius: 50%;
-    opacity: 0;
-    z-index: 9998;
-}
-
-/* 水花动画 */
-@keyframes fishSplashLeft {
-    0% { 
-        transform: translate(0, 0) scale(0); 
-        opacity: 1; 
-    }
-    50% { 
-        transform: translate(-50px, 10px) scale(1.2); 
-        opacity: 0.8; 
-    }
-    100% { 
-        transform: translate(-150px, 20px) scale(2.2); 
-        opacity: 0; 
-    }
-}
-
-@keyframes fishSplashRight {
-    0% { 
-        transform: translate(0, 0) scale(0); 
-        opacity: 1; 
-    }
-    50% { 
-        transform: translate(50px, 10px) scale(1.2); 
-        opacity: 0.8; 
-    }
-    100% { 
-        transform: translate(150px, 20px) scale(2.2); 
-        opacity: 0; 
-    }
-}
-
 /* ===================== 移动端适配 ===================== */
 /* 平板/手机通用适配 */
 @media (max-width: 768px) {
@@ -795,4 +668,113 @@ body {
 .pull-bar-section { 
     width: 100%; 
     margin: 0 -8px;
+}
+
+/* 新增：抛竿阶段隐藏类 */
+.hidden {
+    display: none !important;
+}
+
+/* 新增：抛竿动画样式 */
+.cast-animation {
+    position: absolute;
+    width: 15px;
+    height: 15px;
+    background: #ffffff;
+    border-radius: 50%;
+    opacity: 0;
+    z-index: 5;
+    animation: cast 0.8s ease-out forwards;
+}
+
+@keyframes cast {
+    0% { opacity: 1; transform: translate(0, -60px) scale(0.3); }
+    80% { opacity: 0.8; transform: translate(0, -10px) scale(0.8); }
+    100% { opacity: 0; transform: translate(0, 0) scale(1); }
+}
+
+/* 新增：入水波纹动画 */
+.splash-animation {
+    position: absolute;
+    border: 2px solid rgba(255, 255, 255, 0.7);
+    border-radius: 50%;
+    opacity: 0;
+    z-index: 4;
+    animation: splash 1.2s ease-out forwards;
+}
+
+@keyframes splash {
+    0% { opacity: 1; transform: scale(0); }
+    50% { opacity: 0.8; }
+    100% { opacity: 0; transform: scale(40); }
+}
+
+/* ========== 新增：刺鱼阶段样式 ========== */
+/* 刺鱼力度条容器 */
+.stab-bar-section {
+    position: relative;
+    width: 60px;
+    height: 200px;
+    margin: 0 auto 20px;
+    border: 2px solid rgba(255, 255, 255, 0.5);
+    border-radius: 8px;
+    overflow: hidden;
+    display: none; /* 默认隐藏 */
+    z-index: 2;
+}
+
+/* 刺鱼力度条 - 红色上半部分 */
+.stab-bar-red {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 50%;
+    background: linear-gradient(to bottom, #ff4444, #ff0000);
+}
+
+/* 刺鱼力度条 - 绿色下半部分 */
+.stab-bar-green {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    width: 100%;
+    height: 50%;
+    background: linear-gradient(to bottom, #4CAF50, #2E7D32);
+}
+
+/* 刺鱼游标 */
+.stab-cursor {
+    position: absolute;
+    left: 0;
+    right: 0;
+    height: 8px;
+    background: #ffffff;
+    border-radius: 4px;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.8);
+    z-index: 3;
+    /* 初始在顶部 */
+    top: 0;
+    transition: top 0.3s ease; /* 0.3秒动画 */
+}
+
+/* 鱼靠近波纹动画（增强版） */
+.fish-approach-wave {
+    position: absolute;
+    border: 2px solid rgba(255, 255, 255, 0.9);
+    border-radius: 50%;
+    opacity: 0;
+    z-index: 4;
+    animation: fishApproach 2s ease-out infinite;
+}
+
+@keyframes fishApproach {
+    0% { opacity: 1; transform: scale(0); }
+    50% { opacity: 0.8; }
+    100% { opacity: 0; transform: scale(60); }
+}
+
+/* 刺鱼阶段显示类 */
+.stab-phase-active {
+    display: block !important;
 }
