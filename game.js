@@ -105,7 +105,7 @@ const DEFAULT_CONFIG = {
     stabRange3_5: [20, 100],     
     stabRange6_10: [50, 100],    
     // ========== 新增：开局保护配置 ==========
-    startupProtectionDur: 10000, // 开局保护时长（毫秒），可自定义
+    startupProtectionDur: 2000, // 开局保护时长（毫秒），可自定义
     startupProtectionDec: 0.001 // 开局保护期间拉力条下降速率（比正常子弹时间更慢）
 };
 
