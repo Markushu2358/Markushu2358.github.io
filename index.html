@@ -1,126 +1,191 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-    <meta charset="UTF-8">
-    <!-- 移动端核心适配：竖屏、禁止缩放、刘海屏适配 -->
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
-    <meta name="screen-orientation" content="portrait">
-    <meta name="x5-screen-orientation" content="portrait">
-    <meta name="msapplication-tap-highlight" content="no">
-    <meta name="apple-mobile-web-app-capable" content="yes">
-    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-    <title>钓鱼小游戏</title>
-    <link rel="stylesheet" href="game.css">
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>移动特性：三种档位折返跑对比（示例动画）</title>
+<style>
+  :root{
+    --ink:#202124; --sub:#5F6368; --paper:#F7F5F0;
+    --green:#2F7D4F; --green-soft:#DCEDE2; --yellow:#D9E021; --line:#DADCE0;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{background:var(--paper);color:var(--ink);font-family:"Microsoft YaHei","PingFang SC",Helvetica,Arial,sans-serif;padding:26px 24px 36px;}
+  h1{font-size:20px;margin-bottom:4px}
+  .sub{font-size:12.5px;color:var(--sub);margin-bottom:18px;line-height:1.7}
+  .row{display:flex;gap:16px;flex-wrap:wrap}
+  .panel{background:#fff;border:1.5px solid var(--line);border-radius:14px;padding:14px;width:346px}
+  .head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px}
+  .title{font-size:16px;font-weight:bold}
+  .feat{font-size:11px;color:var(--sub)}
+  canvas{display:block;border-radius:10px;background:var(--green-soft)}
+  .bars{margin-top:10px;display:flex;flex-direction:column;gap:5px}
+  .brow{display:flex;align-items:center;gap:8px;font-size:12px}
+  .bname{width:56px;color:var(--ink)}
+  .btrack{flex:1;height:10px;border-radius:5px;background:#EEF0F2;overflow:hidden}
+  .bfill{height:100%;background:var(--green);display:block}
+  .bval{width:36px;text-align:right;color:var(--sub);font-variant-numeric:tabular-nums}
+  .brow.hot .bfill{background:var(--yellow)}
+  .brow.hot .bname{font-weight:bold}
+  .cap{font-size:11px;color:var(--sub);margin-top:10px;line-height:1.7}
+  .foot{font-size:12px;color:var(--sub);margin-top:18px;line-height:1.8}
+  .foot b{color:var(--ink)}
+</style>
 </head>
 <body>
-    <!-- 子弹时间提示（全局浮层） -->
-    <div class="bullet-time-notice" id="bulletTimeNotice">子弹时间！1秒内橙色条减速，鱼持续掉血</div>
+<h1>移动特性：三种档位折返跑对比（示例动画）</h1>
+<div class="sub">顶视图，左右折返跑。圆圈＝角色，三角＝当前朝向，灰点＝运动轨迹——轻灵型变向急、停得住但直线慢；沉重型直线快但刹停距离长、掉头慢；标准型居中。条形图高亮＝角色此刻正在用的属性。</div>
 
-    <!-- 游戏结束弹窗 -->
-    <div class="game-over-screen" id="gameOverScreen">
-        <div class="game-over-text" id="gameOverText"></div>
-        <button class="reset-button" id="gameOverResetBtn">重新开始</button>
+<div class="row" id="panels"></div>
+
+<div class="foot">
+守恒式：<b>加速 + 速度 + 转向 + 制动 = 移动速度</b>（每个子值占移动速度的 10%～50%）——三种档位是同一份额度的不同分布，下方条形图为<b>示例分配</b>，仅用于演示守恒与取舍，不是项目数值。
+</div>
+
+<script>
+"use strict";
+
+/* 三种档位：split＝额度示例分配；p＝运动参数（px/s²、px/s、°/s） */
+const TYPES = [
+  {key:"light", name:"轻灵型", feat:"转向和制动高", styles:"防守反击型 / 怪球手",
+   split:{加速:15,速度:15,转向:35,制动:35},
+   p:{accel:300, max:105, turn:400, brake:1260}},
+  {key:"norm", name:"标准型", feat:"四项均衡", styles:"底线进攻型 / 平衡底线型 / 全能型",
+   split:{加速:25,速度:25,转向:25,制动:25},
+   p:{accel:255, max:168, turn:220, brake:1000}},
+  {key:"heavy", name:"沉重型", feat:"加速和速度高", styles:"大力发球型 / 发球上网型",
+   split:{加速:40,速度:40,转向:10,制动:10},
+   p:{accel:480, max:210, turn:120, brake:450}},
+];
+
+const W=318, H=150, WALL=26, CY=H/2, PAD=12;
+const q = new URLSearchParams(location.search);
+const T0 = parseFloat(q.get("t")||"0");   /* ?t=秒 预跑到该时刻（截图验证用） */
+
+const root = document.getElementById("panels");
+TYPES.forEach(cfg=>{
+  const el = document.createElement("div");
+  el.className = "panel";
+  el.innerHTML = `
+    <div class="head"><span class="title">${cfg.name}</span><span class="feat">${cfg.feat}</span></div>
+    <canvas width="${W}" height="${H}"></canvas>
+    <div class="bars">${Object.keys(cfg.split).map(k=>`
+      <div class="brow" data-b="${k}">
+        <span class="bname">${k}</span>
+        <span class="btrack"><span class="bfill" style="width:${cfg.split[k]}%"></span></span>
+        <span class="bval">${cfg.split[k]}%</span>
+      </div>`).join("")}
     </div>
+    <div class="cap">示例分配（守恒式合计 100%）。对应风格：${cfg.styles}。</div>`;
+  root.appendChild(el);
+  cfg.ctx = el.querySelector("canvas").getContext("2d");
+  cfg.rows = el.querySelectorAll(".brow");
+  /* 折返状态：h＝朝向角（0=向右，π=向左）；dir＝+1 右 / -1 左；转向只转 180°（turnEnd＝进入转向时的 h＋π） */
+  cfg.s = {x:WALL+34, y:CY, v:0, h:0, dir:1, mode:"加速", turnEnd:0};
+  cfg.trail = [];
+});
 
-    <!-- 主容器：适配所有屏幕尺寸 -->
-    <div class="main-wrapper">
-        <!-- 顶部区域：耐力条 + 能量条 -->
-        <div class="top-section">
-            <!-- 玩家耐力条 -->
-            <div class="player-stamina-horizontal">
-                <div class="player-stamina-fill-horizontal" id="playerStaminaFill"></div>
-                <div class="player-stamina-text-horizontal" id="playerStaminaText">耐力：2000/2000</div>
-            </div>
-            
-            <!-- 能量条（3格） -->
-            <div class="green-bars-horizontal">
-                <div class="green-bar-horizontal">
-                    <div class="green-fill-horizontal" id="greenFill1"></div>
-                    <div class="green-effect-horizontal" id="greenEffect1"></div>
-                </div>
-                <div class="green-bar-horizontal">
-                    <div class="green-fill-horizontal" id="greenFill2"></div>
-                    <div class="green-effect-horizontal" id="greenEffect2"></div>
-                </div>
-                <div class="green-bar-horizontal">
-                    <div class="green-fill-horizontal" id="greenFill3"></div>
-                    <div class="green-effect-horizontal" id="greenEffect3"></div>
-                </div>
-            </div>
-        </div>
+const RAD = Math.PI/180;
+function stepOne(c, dt){
+  const s = c.s, p = c.p;
+  const turnV = 0;                                    /* 原地掉头：刹停后再转 */
+  const wallR = W - WALL - PAD, wallL = WALL + PAD;   /* 折返点 */
 
-        <!-- 水域区域：核心游戏视觉区 -->
-        <div class="water-section">
-            <div class="water-wave"></div>
-            <div class="water-wave"></div>
-           
-    
-            <!-- 新增：刺鱼力度条（默认隐藏） -->
-            <div class="stab-bar-section" id="stabBarSection">
-                <div class="stab-bar-red"></div>
-                <div class="stab-bar-green"></div>
-                <div class="stab-cursor" id="stabCursor"></div>
-            </div>
+  if(s.mode === "加速" || s.mode === "巡航"){
+    s.v = Math.min(p.max, s.v + p.accel*dt);
+    const distToWall = s.dir > 0 ? (wallR - s.x) : (s.x - wallL);
+    const stopDist = s.v*s.v/(2*p.brake);
+    s.mode = s.v >= p.max - 0.5 ? "巡航" : "加速";
+    if(distToWall <= stopDist) s.mode = "制动";       /* 恰好在墙前刹停，三档跑同样全程 */
+  } else if(s.mode === "制动"){
+    s.v = Math.max(turnV, s.v - p.brake*dt);
+    if(s.v <= turnV + 0.01){
+      s.mode = "转向";
+      s.turnEnd = s.h + Math.PI;                      /* 从当前朝向只转 180° */
+    }
+  } else if(s.mode === "转向"){
+    s.v = 0;                                          /* 原地掉头：停住转 180°，不走弧线 */
+    s.h += p.turn*RAD*dt;
+    if(s.h >= s.turnEnd){                             /* 转满 180°：立即反向起跑 */
+      s.h = s.turnEnd;
+      if(s.h >= 2*Math.PI) s.h -= 2*Math.PI;          /* 朝向归一（0 或 π） */
+      s.dir *= -1;
+      s.mode = "加速";
+    }
+  }
 
-            <!-- 拉力条区域 -->
-            <div class="pull-bar-section">
-                <div class="top-bar">
-                    <div class="orange-fill" id="orangeFill"></div>
-                    <div class="target-zone" id="targetZone"></div>
-                </div>
-            </div>
-            
-            <!-- 鱼血量显示 -->
-            <div class="fish-health-section">
-                <div class="fish-health-container">
-                    <div class="fish-health-ring">
-                        <div class="fish-health-fill" id="fishHealthFill"></div>
-                    </div>
-                    <div class="fish-health-mask">
-                        <div class="fish-icon" id="fishIcon"></div>
-                    </div>
-                    <div class="fish-health-text" id="fishHealthText">3000/3000</div>
-                </div>
-            </div>
-            
-            <!-- 游戏状态提示 -->
-            <div class="status" id="status">按住收线按钮 | 黄色判定区：60%（含）-85%（不含） | 总能量：0/300</div>
-        </div>
+  s.x += Math.cos(s.h) * s.v * dt;
+  s.y = CY;
+  s.x = Math.max(wallL-4, Math.min(wallR+4, s.x));
 
-        <!-- 底部操作区：按钮集合 -->
-        <div class="bottom-section">
-            <div class="button-container">
-                <!-- 收线 + 技能1/3 横向布局 -->
-                <div class="reel-skill-row">
-                    <button class="skill-button skill1-button" id="skill1Button" disabled>技能1 (1能量)</button>
-                    <button class="reel-button" id="reelButton">
-                        <span>收线</span>
-                    </button>
-                    <button class="skill-button skill3-button" id="skill3Button" disabled>技能3 (3能量)</button>
-                </div>
-                
-                <!-- 技能2单独一行 -->
-                <div class="skill2-row">
-                    <button class="skill-button skill2-button" id="skill2Button" disabled>技能2 (恢复200耐力，1能量)</button>
-                </div>
-                
-                <!-- 重置按钮 -->
-                <div class="reset-button-row">
-                    <button class="reset-button" id="resetButton">重置</button>
-                </div>
-                
-                <!-- 鱼类型选择 -->
-                <div class="fish-select-group">
-                    <button class="fish-select-button normal-fish-btn active" id="normalFishBtn">普通鱼</button>
-                    <button class="fish-select-button boss-fish-btn" id="bossFishBtn">BOSS鱼</button>
-                </div>
-            </div>
-        </div>
-    </div>
+  if(s.v > 1 && (!c.trail.length ||
+      Math.hypot(s.x-c.trail[c.trail.length-1][0], s.y-c.trail[c.trail.length-1][1]) > 2.2)){
+    c.trail.push([s.x, s.y]);
+    if(c.trail.length > 130) c.trail.shift();
+  }
 
-    <!-- 特效容器（全局浮层，最高层级） -->
-    <div class="particle-container" id="particleContainer"></div>
+  /* 条形图高亮：此刻正在用的属性 */
+  let hot;
+  if(s.mode === "转向") hot = "转向";
+  else if(s.mode === "制动") hot = "制动";
+  else if(s.v < p.max - 0.5) hot = "加速";
+  else hot = "速度";
+  c.rows.forEach(r=>r.classList.toggle("hot", r.dataset.b === hot));
 
-    <script src="game.js"></script>
+  draw(c);
+}
+
+function draw(c){
+  const g = c.ctx, s = c.s;
+  g.clearRect(0,0,W,H);
+  /* 左右折返线 */
+  g.strokeStyle = "#2F7D4F"; g.lineWidth = 3;
+  g.beginPath(); g.moveTo(WALL, 14); g.lineTo(WALL, H-14); g.stroke();
+  g.beginPath(); g.moveTo(W-WALL, 14); g.lineTo(W-WALL, H-14); g.stroke();
+  /* 中心跑道 */
+  g.strokeStyle = "#B9C6BD"; g.lineWidth = 1.2; g.setLineDash([5,5]);
+  g.beginPath(); g.moveTo(WALL+6, CY); g.lineTo(W-WALL-6, CY); g.stroke();
+  g.setLineDash([]);
+  /* 轨迹 */
+  c.trail.forEach((pt,i)=>{
+    g.fillStyle = `rgba(90,100,95,${0.08 + 0.30*i/c.trail.length})`;
+    g.beginPath(); g.arc(pt[0], pt[1], 1.7, 0, 7); g.fill();
+  });
+  /* 圆圈 */
+  g.beginPath(); g.arc(s.x, s.y, 9, 0, 7);
+  g.fillStyle = "#FFFFFF"; g.fill();
+  g.lineWidth = 2.4; g.strokeStyle = "#202124"; g.stroke();
+  /* 朝向三角 */
+  const dx = Math.cos(s.h), dy = Math.sin(s.h);
+  const tipX = s.x + dx*19, tipY = s.y + dy*19;
+  const bx = s.x + dx*9, by = s.y + dy*9;
+  const px = -dy*6.5, py = dx*6.5;
+  g.beginPath();
+  g.moveTo(tipX, tipY);
+  g.lineTo(bx + px, by + py);
+  g.lineTo(bx - px, by - py);
+  g.closePath();
+  g.fillStyle = "#D9E021"; g.fill();
+  g.lineWidth = 1.4; g.strokeStyle = "#202124"; g.stroke();
+}
+
+/* ?t= 预跑：把状态推进到指定时刻再开始实时循环 */
+if(T0 > 0){
+  let acc = 0;
+  while(acc < T0){ TYPES.forEach(c=>stepOne(c, 0.033)); acc += 0.033; }
+} else {
+  TYPES.forEach(c=>draw(c));
+}
+
+let last = null;
+function loop(now){
+  if(last === null) last = now;
+  const dt = Math.min((now - last)/1000, 0.05);
+  last = now;
+  TYPES.forEach(c=>stepOne(c, dt));
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+</script>
 </body>
 </html>
